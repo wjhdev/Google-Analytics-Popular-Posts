@@ -5,7 +5,6 @@
  * @package Analytic Bridge
  */
 
-
 /**
  * Register *network* option page for the Analytic Bridge.
  *
@@ -15,8 +14,8 @@ function analyticbridge_network_plugin_menu() {
 
 	add_submenu_page(
 		'settings.php',
-		'Analytic Bridge Network Options',
-		'Analytic Bridge',
+		'GA Popular Posts Network Options',
+		'GA Popular Posts<D-F>',
 		'manage_network_options',
 		'analytic-bridge',
 		'analyticbridge_network_option_page_html'
@@ -24,7 +23,6 @@ function analyticbridge_network_plugin_menu() {
 
 }
 add_action( 'network_admin_menu', 'analyticbridge_network_plugin_menu' );
-
 
 /**
  * Output the html for the *network* option page.
@@ -36,7 +34,7 @@ function analyticbridge_network_option_page_html() {
 	if(!current_user_can('manage_network_options'))
 		wp_die("Sorry, you don't have permission to do this");
 	echo '<div class="wrap">';
-	echo '<h2>Network Analytic Bridge Options</h2>';
+	echo '<h2>Network Google Analytics Popular Posts Options</h2>';
 	echo '<form action="'. admin_url('admin-post.php?action=network-analytic-bridge-options') .'" method="post">';
 
 	wp_nonce_field('network_option_page_update');
@@ -57,7 +55,6 @@ function analyticbridge_network_option_page_html() {
 
 }
 
-
 function analyticbridge_update_network_options(){
 
 	wp_nonce_field('network_option_page_update');
@@ -72,4 +69,3 @@ function analyticbridge_update_network_options(){
 	exit;
 }
 add_action('admin_post_network-analytic-bridge-options',  'analyticbridge_update_network_options');
-
