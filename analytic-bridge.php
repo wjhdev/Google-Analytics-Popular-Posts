@@ -161,7 +161,6 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 					  'sort' => '-ga:sessions'
 					)
 	);
-
 	if($verbose) {
 		echo "returned report:\n\n";
 		echo " - itemsPerPage: " . $report->itemsPerPage . "\n";
@@ -179,14 +178,8 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 
 		// $wpdb->query('START TRANSACTION');
 
-		// Begin our sql statement.
-		$pagesql = "INSERT INTO `" . PAGES_TABLE . "` (pagepath, post_id) VALUES \n";
-		$metricsql = "INSERT INTO `" . METRICS_TABLE . "` (page_id,startdate,enddate,querytime,metric,value) VALUES \n";
-
-		// caching iterator contains hasNext() functionality.
-		$iter = new CachingIterator(new ArrayIterator($report->rows));
-
-		foreach ($iter as $r) {
+		foreach ($report->rows as $k => $r) {
+			
 			
 			$GAPagePath = $r[0]; // $r[0] - pagePath
 			$wpurl = get_home_url() . preg_replace( '/index.php$/', '', $GAPagePath );
@@ -195,7 +188,8 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 			if ( $postid == 0 ) {
 				continue;
 			}
-
+			$pagesql = "";
+			$metricsql = "";
 			if ( $postid && ( get_permalink( $postid ) != $wpurl ) ) {
 
 				//
@@ -218,7 +212,10 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 
 			} else {
 
-				$pagesql .= $wpdb->prepare( "\t(%s, %s)", $GAPagePath, $postid );
+				$pagesql .= !$pagesql ? "INSERT INTO `" . PAGES_TABLE . "` (pagepath, post_id) VALUES \n" : ", ";
+				$metricsql .= !$metricsql ? "INSERT INTO `" . METRICS_TABLE . "` (page_id,startdate,enddate,querytime,metric,value) VALUES \n" : ", ";
+
+				$pagesql .= $wpdb->prepare( "\t(%s, %s) ", $GAPagePath, $postid );
 
 				// Adjust things to save based on the google analytics timezone.
 				$tstart = new DateTime($startdate,new DateTimeZone($gaTimezone));
@@ -237,27 +234,21 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 				// Insert ga:pageviews
 				$metricsql .= $wpdb->prepare(
 
-						"(
-							(SELECT `id` from " . PAGES_TABLE . " WHERE `pagepath`=%s),
-								%s,
-								%s,
-								%s,
-								%s,
-								%s)
-						", 		$r[0], 
-						   		date_format($tstart, 'Y-m-d'), 
-						   		date_format($tend, 'Y-m-d'), 
-						   		date_format($qTime, 'Y-m-d H:i:s'), 
-						   		'ga:pageviews', 
-						   		$r[2],
-						   		$r[2]
+						"(	(SELECT `id` from " . PAGES_TABLE . " WHERE `pagepath`=%s),
+							%s,
+							%s,
+							%s,
+							%s,
+							%s) 
+						", 	$r[0], 
+						   	date_format($tstart, 'Y-m-d'), 
+						   	date_format($tend, 'Y-m-d'), 
+						   	date_format($qTime, 'Y-m-d H:i:s'), 
+						   	'ga:pageviews', 
+						   	$r[2],
+						   	$r[2]
 
 					);
-
-				if($iter->hasNext()) {
-					$pagesql .= ", \n";
-					$metricsql .= ", \n";
-				}
 			}
 		}
 
