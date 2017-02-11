@@ -154,7 +154,7 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 					get_option('analyticbridge_setting_account_profile_id'),
 					$start,
 					$start,
-					"ga:sessions,ga:pageviews,ga:bounceRate,ga:avgTimeOnPage",
+					"ga:sessions,ga:pageviews,ga:exits,ga:bounceRate,ga:avgSessionDuration,ga:avgTimeOnPage",
 					array(
 					  "dimensions" => "ga:pagePath",
 					  'max-results' => '1000',
