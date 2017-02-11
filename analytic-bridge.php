@@ -154,21 +154,19 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 					get_option('analyticbridge_setting_account_profile_id'),
 					$start,
 					$start,
-					"ga:sessions,ga:pageviews,ga:exits,ga:bounceRate,ga:avgSessionDuration,ga:avgTimeOnPage",
+					"ga:sessions,ga:pageviews,ga:bounceRate,ga:avgTimeOnPage",
 					array(
 					  "dimensions" => "ga:pagePath",
 					  'max-results' => '1000',
 					  'sort' => '-ga:sessions'
 					)
-	); // $ids, $startDate, $endDate, $metrics, $optParams
+	);
 
 	if($verbose) {
 		echo "returned report:\n\n";
 		echo " - itemsPerPage: " . $report->itemsPerPage . "\n";
 		echo " - row count: " . sizeof($report->rows) . "\n\n";
 	}
-
-	// Get google's timezone. Save it in case we need it later.
 
 	$gaTimezone = $analytics->timezone($report);
 	update_option('analyticbridge_analytics_timezone',$gaTimezone);
@@ -189,21 +187,16 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 		$iter = new CachingIterator(new ArrayIterator($report->rows));
 
 		foreach ($iter as $r) {
-			// $r[0] - pagePath
-			$gapath = $r[0];
-
-			// map google url path the wordpress path.
-			$wpurl = get_home_url() . preg_replace('/index.php$/', '', $gapath);
-
-			// try to determine the $postid.
+			
+			$GAPagePath = $r[0]; // $r[0] - pagePath
+			$wpurl = get_home_url() . preg_replace( '/index.php$/', '', $GAPagePath );
 			$postid = url_to_postid( $wpurl );
 
-			// if the $postid is 0, url_to_postid failed. skip importing data for this page.
 			if ( $postid == 0 ) {
 				continue;
 			}
 
-			if ( $postid && (get_permalink($postid) != $wpurl) ) {
+			if ( $postid && ( get_permalink( $postid ) != $wpurl ) ) {
 
 				//
 				// In some cases, two pagepaths might belong to the same post.
@@ -225,12 +218,7 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 
 			} else {
 
-				// Insert into our 'post' table the pagepath and related postid
-				// (if it doesn't exist).
-				// Update `id` so that mysql_last_inserted is set.
-				$pagesql .= $wpdb->prepare(
-						"\t(%s, %s)", $gapath, $postid
-					);
+				$pagesql .= $wpdb->prepare( "\t(%s, %s)", $GAPagePath, $postid );
 
 				// Adjust things to save based on the google analytics timezone.
 				$tstart = new DateTime($startdate,new DateTimeZone($gaTimezone));
@@ -251,12 +239,18 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 
 						"(
 							(SELECT `id` from " . PAGES_TABLE . " WHERE `pagepath`=%s),
-							%s,
-							%s,
-							%s,
-							%s,
-							%s)
-						", $r[0], date_format($tstart, 'Y-m-d'), date_format($tend, 'Y-m-d'), date_format($qTime, 'Y-m-d H:i:s'), 'ga:pageviews', $r[2], $r[2]
+								%s,
+								%s,
+								%s,
+								%s,
+								%s)
+						", 		$r[0], 
+						   		date_format($tstart, 'Y-m-d'), 
+						   		date_format($tend, 'Y-m-d'), 
+						   		date_format($qTime, 'Y-m-d H:i:s'), 
+						   		'ga:pageviews', 
+						   		$r[2],
+						   		$r[2]
 
 					);
 

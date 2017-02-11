@@ -14,7 +14,7 @@ Class AnayticBridgePopularPosts implements Iterator {
 	// half life to use while querying.
 	public $halflife;
 
-	public $size;
+	public $size = 20;
 
 	public $initalized = false;
 
@@ -28,7 +28,6 @@ Class AnayticBridgePopularPosts implements Iterator {
 		$this->position = 0;
 		$this->queried = false;
 		$this->halflife = get_option('analyticbridge_setting_popular_posts_halflife');
-		$this->size = 20;
 		$this->initalized = true;
 	}
 
@@ -37,6 +36,8 @@ Class AnayticBridgePopularPosts implements Iterator {
 		global $wpdb;
 
 		if ($this->initalized) {
+
+			$this->size = $this->size ?: 20;
 
 			// 1: Calculate a ratio coeffient
 			$tday = new DateTime('today',new DateTimeZone('America/Chicago'));
@@ -137,8 +138,8 @@ Class AnayticBridgePopularPosts implements Iterator {
 				-- For now, they must be posts.
 				WHERE `pst`.`post_type` = 'post'
 					ORDER BY `weighted_pageviews` DESC
-					LIMIT $this->size
-			";
+					LIMIT " . $this->size . ";";
+
 
 			$this->result = $wpdb->get_results( $SQL );
 
