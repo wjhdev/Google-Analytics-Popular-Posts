@@ -177,7 +177,9 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 	try {
 
 		// $wpdb->query('START TRANSACTION');
-
+		
+		$pagesql = "";
+		$metricsql = "";
 		foreach ($report->rows as $k => $r) {
 			
 			
@@ -188,8 +190,7 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 			if ( $postid == 0 ) {
 				continue;
 			}
-			$pagesql = "";
-			$metricsql = "";
+
 			if ( $postid && ( get_permalink( $postid ) != $wpurl ) ) {
 
 				//
@@ -212,8 +213,8 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 
 			} else {
 
-				$pagesql .= !$pagesql ? "INSERT INTO `" . PAGES_TABLE . "` (pagepath, post_id) VALUES \n" : ", ";
-				$metricsql .= !$metricsql ? "INSERT INTO `" . METRICS_TABLE . "` (page_id,startdate,enddate,querytime,metric,value) VALUES \n" : ", ";
+				$pagesql .= $pagesql == "" ? "INSERT INTO `" . PAGES_TABLE . "` (pagepath, post_id) VALUES \n" : ", ";
+				$metricsql .= $metricsql == "" ? "INSERT INTO `" . METRICS_TABLE . "` (page_id,startdate,enddate,querytime,metric,value) VALUES \n" : ", ";
 
 				$pagesql .= $wpdb->prepare( "\t(%s, %s) ", $GAPagePath, $postid );
 
@@ -245,7 +246,6 @@ function query_and_save_analytics($analytics, $startdate, $verbose=false) {
 						   	date_format($tend, 'Y-m-d'), 
 						   	date_format($qTime, 'Y-m-d H:i:s'), 
 						   	'ga:pageviews', 
-						   	$r[2],
 						   	$r[2]
 
 					);
