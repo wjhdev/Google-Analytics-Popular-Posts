@@ -164,7 +164,10 @@ class AnalyticBridge {
  *		if authentication fails.
  * @return Google_Client object on success, 'false' on failure.
  */
-function analytic_bridge_google_client($auth = true,&$e = null) {
+function ak_google_client($auth = true,&$e = null) {
+	if(!(analyticbridge_client_id() && analyticbridge_client_secret() && get_option('analyticbridge_setting_account_profile_id'))) {
+		return false;
+	}
 	$AnalyticBridge = AnalyticBridge::get_instance();
 	return $AnalyticBridge->getClient($auth,$e);
 }
@@ -182,7 +185,7 @@ function analytic_bridge_google_client($auth = true,&$e = null) {
 function analytic_bridge_authenticate_google_client($code, &$e = null) {
 
 	// get a new unauthenticated google client.
-	$client = analytic_bridge_google_client(false,$e);
+	$client = ak_google_client(false,$e);
 
 	// If we didn't get a client (for whatever reason) return false.
 	if(!$client)

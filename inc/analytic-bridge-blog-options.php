@@ -35,7 +35,7 @@ function analyticbridge_blog_options_admin_head() {
 		return;
 	}
 
-	$client = analytic_bridge_google_client();
+	$client = ak_google_client();
 	$accessToken = json_decode( get_option('analyticbridge_access_token') );
 ?>
 	<!-- Google Analytics Embed API -->
@@ -137,10 +137,10 @@ function analyticbridge_option_page_html() {
 
 		// No auth ticket loaded (yet).
 		} elseif ( ! get_option('analyticbridge_access_token') ) {
-			$client = analytic_bridge_google_client(false);
+			$client = ak_google_client(false);
 			echo "<a href='" . $client->createAuthUrl() . "'>" . __( "Connect", 'gapp' ) . "</a>";
 		} else {
-			$client = analytic_bridge_google_client();
+			$client = ak_google_client();
 			$service = new Google_Service_Oauth2($client);
 			$user = $service->userinfo->get();
 			echo __( "Connected as ", 'gapp' ) . $user->getEmail();
@@ -368,7 +368,7 @@ function analyticbridge_setting_api_token_connect_button() {
 
 			// Analytic Bridge is NOT authenticated.
 			// We still need it to create an authentication URL.
-			$client = analytic_bridge_google_client( false );
+			$client = ak_google_client( false );
 
 			?>
 				<a href="<?php echo $client->createAuthUrl() ?>"  class='google-button'><?php _e( 'Connect to Google Analytics', 'gapp' ); ?></a>
@@ -378,7 +378,7 @@ function analyticbridge_setting_api_token_connect_button() {
 		} else {
 
 			// Analytic Bridge is Authenticated.
-			$client = analytic_bridge_google_client();
+			$client = ak_google_client();
 			$service = new Google_Service_Oauth2($client);
 			$user = $service->userinfo->get();
 			?>
@@ -433,7 +433,7 @@ function analyticbridge_setting_api_token_connect_button() {
  */
 function analyticbridge_setting_account_profile_id_input() {
 
-	if( $client = analytic_bridge_google_client(true,$e) ) {
+	if( $client = ak_google_client(true,$e) ) {
 		echo '<input name="analyticbridge_setting_account_profile_id" id="analyticbridge_setting_account_profile_id" type="text" value="' . get_option('analyticbridge_setting_account_profile_id') . '" class="regular-text" />';
 	} else {
 		echo "<p class='description'>Not authenticated.</p>";
