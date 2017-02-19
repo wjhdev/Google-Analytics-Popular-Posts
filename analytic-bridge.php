@@ -90,10 +90,12 @@ function largo_anaylticbridge_cron($verbose = false) {
 		array( 
 			'startdate' => 'today',
 			'metrics' => 'ga:pageviews,ga:avgTimeOnPage',
+			'count' => 75,
 		), 
 		array( 
 			'startdate' => 'yesterday',
 			'metrics' => 'ga:pageviews,ga:avgTimeOnPage',
+			'count' => 150,
 		), 
 	);
 	$queries = apply_filters( "analytickit_queries", $queries );
@@ -148,6 +150,7 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 	$metrics = $args["metrics"];
 	$metricsArray = explode(",", $metrics);
 	$sort = array_key_exists('sort',$args) ? $args["sort"] : "-" . $metricsArray[0];
+	$count = array_key_exists('count',$args) ? $args["count"] : 250;
 
 	if($verbose) echo "Making a call to ga:get...\n";
 
@@ -158,7 +161,7 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 					$metrics,
 					array(
 					  'dimensions' => 'ga:pagePath',
-					  'max-results' => '250',
+					  'max-results' => $count,
 					  'sort' => $sort
 					)
 	);
@@ -215,43 +218,25 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 			// $r[1] - ga:pageviews
 			// $r[2] - ga:avgTimeOnPage
 
-			// Insert ga:pageviews
-			$metricsql .= $wpdb->prepare(
+			foreach($metricsArray as $index => $metric) {
+				// Insert ga:pageviews
+				$metricsql .= $wpdb->prepare(
+						"(	(SELECT `id` from " . PAGES_TABLE . " WHERE `pagepath`=%s),
+							%s,
+							%s,
+							%s,
+							%s,
+							%s) 
+						", 	$r[0], 
+					   		date_format($tstart, 'Y-m-d'), 
+					   		date_format($tend, 'Y-m-d'), 
+					   		date_format($qTime, 'Y-m-d H:i:s'), 
+					   		$metric, 
+					   		$r[$index]
+					);
 
-					"(	(SELECT `id` from " . PAGES_TABLE . " WHERE `pagepath`=%s),
-						%s,
-						%s,
-						%s,
-						%s,
-						%s) 
-					", 	$r[0], 
-					   	date_format($tstart, 'Y-m-d'), 
-					   	date_format($tend, 'Y-m-d'), 
-					   	date_format($qTime, 'Y-m-d H:i:s'), 
-					   	'ga:pageviews', 
-					   	$r[1]
-
-				);
-
-			$metricsql .= ", \n";
-
-			// Insert ga:pageviews
-			$metricsql .= $wpdb->prepare(
-
-					"(	(SELECT `id` from " . PAGES_TABLE . " WHERE `pagepath`=%s),
-						%s,
-						%s,
-						%s,
-						%s,
-						%s) 
-					", 	$r[0], 
-					   	date_format($tstart, 'Y-m-d'), 
-					   	date_format($tend, 'Y-m-d'), 
-					   	date_format($qTime, 'Y-m-d H:i:s'), 
-					   	'ga:avgTimeOnPage', 
-					   	$r[2]
-
-				);
+				//$metricsql .= ", \n";
+			}
 
 		}
 
