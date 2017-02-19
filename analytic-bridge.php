@@ -234,7 +234,7 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 					   		date_format($tend, 'Y-m-d'), 
 					   		date_format($qTime, 'Y-m-d H:i:s'), 
 					   		$metric, 
-					   		$r[$index]
+					   		$r[$index+1]
 					);
 				$first = false;
 
