@@ -218,9 +218,11 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 			// $r[1] - ga:pageviews
 			// $r[2] - ga:avgTimeOnPage
 
+			$first = true;
 			foreach($metricsArray as $index => $metric) {
 				// Insert ga:pageviews
 				$metricsql .= $wpdb->prepare(
+						( $first ? "" : ",") .
 						"(	(SELECT `id` from " . PAGES_TABLE . " WHERE `pagepath`=%s),
 							%s,
 							%s,
@@ -234,6 +236,7 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 					   		$metric, 
 					   		$r[$index]
 					);
+				$first = false;
 
 				//$metricsql .= ", \n";
 			}
