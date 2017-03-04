@@ -1,6 +1,6 @@
 <?php
 
-require_once( plugin_dir_path( __FILE__ ) . 'AnalyticBridgePopularPosts.php');
+include_once( plugin_dir_path( __FILE__ ) . 'AnalyticBridgePopularPosts.php');
 
 /**
  * The base widget for the Analytics bridge Plugin
@@ -94,9 +94,7 @@ class AnalyticBridgePopularPostWidget extends WP_Widget {
 			$instance['num_posts']
 		);
 
-		$this->popPosts = new AnayticBridgePopularPosts();
-		$this->popPosts->size = $instance['num_posts'];
-		$this->popPosts->query();
+		$this->popPosts = new AnayticBridgePopularPosts($instance['num_posts']);
 
 		$query_args = array(
 			'post__in' => $this->popPosts->ids,

@@ -146,6 +146,15 @@ function analyticbridge_option_page_html() {
 			echo __( "Connected as ", 'gapp' ) . $user->getEmail();
 		}
 
+		_e( "<h3>Update Analytics</h3>", 'gapp' );
+		echo "<pre>";
+			printf(
+				'<a href="%1$s">%2$s</a>',
+				admin_url('options-general.php?page=analytic-bridge&update'),
+				__( 'Update analytics', 'gapp' )
+			);
+		echo "</pre>";
+
 		/* The user has asked us to run the cron. */
 		if ( isset( $_GET['update'] ) ) {
 			echo "<h3>Running Update...</h3>";
@@ -153,16 +162,8 @@ function analyticbridge_option_page_html() {
 				_e( "Running cron...", 'gapp' );
 				largo_anaylticbridge_cron(true);
 			echo "</pre>";
-		} else {
-			_e( "<h3>Update Analytics</h3>", 'gapp' );;
-			echo "<pre>";
-				printf(
-					'<a href="%1$s">%2$s</a>',
-					admin_url('options-general.php?page=analytic-bridge&update'),
-					__( 'Update analytics', 'gapp' )
-				);
-			echo "</pre>";
-		}
+		} 
+
 	} else {
 		_e( "Enter your Google API client details in the settings fields at the top of this page.", 'gapp' );
 	}

@@ -21,24 +21,24 @@ define('PAGES_TABLE', $wpdb->prefix . "analyticbridge_pages");
 /** Include Google PHP client library. */
 require_once( plugin_dir_path( __FILE__ ) . 'api/src/Google/Client.php');
 require_once( plugin_dir_path( __FILE__ ) . 'api/src/Google/Service/Analytics.php');
-require_once( plugin_dir_path( __FILE__ ) . 'AnalyticBridgeGoogleClient.php');
-require_once( plugin_dir_path( __FILE__ ) . 'Analytic_Bridge_Service.php');
+include( plugin_dir_path( __FILE__ ) . 'AnalyticBridgeGoogleClient.php');
+include( plugin_dir_path( __FILE__ ) . 'Analytic_Bridge_Service.php');
 
 /**
  * Registers admin option page and populates with
  * plugin settings.
  */
-require_once( plugin_dir_path( __FILE__ ) . 'inc/analytic-bridge-network-options.php');
-require_once( plugin_dir_path( __FILE__ ) . 'inc/analytic-bridge-blog-options.php');
+include( plugin_dir_path( __FILE__ ) . 'inc/analytic-bridge-network-options.php');
+include( plugin_dir_path( __FILE__ ) . 'inc/analytic-bridge-blog-options.php');
 
-include_once(plugin_dir_path( __FILE__ ) .'classes/AnalyticsDashWidget.php');
-include_once(plugin_dir_path( __FILE__ ) .'classes/AnalyticsPopularWidget.php');
-include_once(plugin_dir_path( __FILE__ ) .'classes/AnalyticBridgeGoogleAnalytics.php');
+include(plugin_dir_path( __FILE__ ) .'classes/AnalyticsDashWidget.php');
+include(plugin_dir_path( __FILE__ ) .'classes/AnalyticsPopularWidget.php');
+include(plugin_dir_path( __FILE__ ) .'classes/AnalyticBridgeGoogleAnalytics.php');
 
 /**
  * Functions for activating/deactivating the plugin.
  */
-include_once(plugin_dir_path( __FILE__ ) .'inc/analytic-bridge-installing.php');
+include(plugin_dir_path( __FILE__ ) .'inc/analytic-bridge-installing.php');
 
 /**
  * Add new intervals for cron jobs.
@@ -71,9 +71,6 @@ function _ak_verbose_echo($verbose,$log) {
  * @param boolean $verbose set to true to print
  */
 function largo_anaylticbridge_cron($verbose = false) {
-
-	global $wpdb;
-
 	$rustart = getrusage(); // track usage.
 
 	_ak_verbose_echo($verbose,"\nBeginning analyticbridge_cron...\n\n");
@@ -102,10 +99,14 @@ function largo_anaylticbridge_cron($verbose = false) {
 
 	ak_clear_metric_cache();
 
+	
 	$analytics = new Analytic_Bridge_Service($client);
 	foreach ($queries as $query) {
 		query_and_save_analytics( $analytics, $query, $verbose );
+		if (!$verbose) { sleep(10); }
 	}
+	
+	do_action("analytickit_cron_finished");
 
 	_ak_verbose_echo($verbose,"Google Analytics Popular Posts cron executed successfully\n\n");
 	_ak_verbose_echo($verbose,"End analyticbridge_cron\n");
@@ -142,7 +143,7 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 		return false;
 	} else if ( !array_key_exists( 'metrics', $args ) ) {
 		_ak_verbose_echo( $verbose, "Error: No metrics specified. \n\n" ); 
-		return;
+		return false;
 	}
 
 	$start = $args["startdate"];
@@ -152,7 +153,7 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 	$sort = array_key_exists('sort',$args) ? $args["sort"] : "-" . $metricsArray[0];
 	$count = array_key_exists('count',$args) ? $args["count"] : 250;
 
-	if($verbose) echo "Making a call to ga:get...\n";
+	_ak_verbose_echo( $verbose, "Making a call to ga:get...\n");
 
 	$report = $analytics->data_ga->get(
 					get_option('analyticbridge_setting_account_profile_id'),
@@ -181,7 +182,7 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 	// Start a mysql transaction, in a try catch.
 	try {
 
-		$wpdb->query('START TRANSACTION');
+		//$wpdb->query('START TRANSACTION');
 		
 		$pagesql = "";
 		$metricsql = "";
@@ -215,9 +216,6 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 			// The time that the query happened (± a few seconds).
 			$qTime = new DateTime('now',new DateTimeZone($gaTimezone));
 
-			// $r[1] - ga:pageviews
-			// $r[2] - ga:avgTimeOnPage
-
 			$first = true;
 			foreach($metricsArray as $index => $metric) {
 				// Insert ga:pageviews
@@ -238,7 +236,6 @@ function query_and_save_analytics( $analytics, $args, $verbose = false ) {
 					);
 				$first = false;
 
-				//$metricsql .= ", \n";
 			}
 
 		}
