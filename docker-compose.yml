@@ -1,0 +1,72 @@
+version: '3'
+
+services:
+  nginx:
+    build:
+      context: config/nginx
+    container_name: analytics-bridge.test-nginx
+    links:
+      - analytics-bridge.test-wordpress
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - analytics-bridge.test-wordpress:/var/www/html
+      - ./bin/wp-content:/var/www/html/wp-content/
+      - ./${WORDPRESS_UPLOADS_DIR}:/var/www/html/wp-content/uploads
+    environment:
+      DOMAIN: ${SITE_URL}
+
+  wordpress:
+    image: wordpress
+    container_name: analytics-bridge.test-wordpress
+    links:
+      - mariadb
+    expose:
+      - 80
+    restart: always
+    volumes:
+      - analytics-bridge.test-wordpress:/var/www/html
+      - ./bin/vendor:/srv/vendor
+      - ./bin/wp-content/themes:/var/www/html/wp-content/themes
+    environment:
+      WORDPRESS_DB_HOST: mariadb:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_CONFIG_EXTRA: |
+        /* Domain */
+        define('WP_HOME','https://${SITE_URL}');
+        define('WP_SITEURL','https://${SITE_URL}');
+
+  mariadb:
+    container_name: analytics-bridge.test-mariadb
+    image: mariadb
+    volumes:
+      - ./config/mariadb/install/:/docker-entrypoint-initdb.d
+      - analytics-bridge.test-mariadb:/var/lib/mysql:rw
+    restart: always
+    command: mysqld --innodb-buffer-pool-size=512M
+    expose:
+      - 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_DATABASE: wordpress
+
+  composer:
+    image: composer:1.9
+    command: ['composer', 'install']
+    volumes:
+      - ./:/app
+      - ./bin/vendor:/app/vendor
+
+volumes:
+  analytics-bridge.test-mariadb:
+  analytics-bridge.test-wordpress:
+
+networks:
+  default:
+    external:
+      name: analytics-bridge.test-network
