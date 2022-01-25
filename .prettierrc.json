@@ -9,5 +9,7 @@
   "singleQuote": true,
   "tabWidth": 2,
   "trailingComma": "all",
-  "useTabs": false
+  "useTabs": false,
+  "braceStyle": "1tbs",
+  "phpVersion": "7.1"
 }

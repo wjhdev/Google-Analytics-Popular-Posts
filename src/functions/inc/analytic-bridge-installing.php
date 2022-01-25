@@ -11,28 +11,25 @@
  * @since 0.1
  */
 function analyticbridge_plugin_init($networkwide) {
-	global $wpdb;
+  global $wpdb;
 
-	if (function_exists('is_multisite') && is_multisite()) {
-
-		// check if it is a network activation.
-		if ($networkwide) {
-
-			$old_blog = $wpdb->blogid;
-			// Get all blog ids
-			$blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
-			foreach ($blogids as $blog_id) {
-				switch_to_blog($blog_id);
-				_analyticbridge_plugin_init();
-			}
-			switch_to_blog($old_blog);
-			return;
-		}
-	}
-	_analyticbridge_plugin_init();
-
+  if (function_exists('is_multisite') && is_multisite()) {
+    // check if it is a network activation.
+    if ($networkwide) {
+      $old_blog = $wpdb->blogid;
+      // Get all blog ids
+      $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
+      foreach ($blogids as $blog_id) {
+        switch_to_blog($blog_id);
+        _analyticbridge_plugin_init();
+      }
+      switch_to_blog($old_blog);
+      return;
+    }
+  }
+  _analyticbridge_plugin_init();
 }
-register_activation_hook( dirname( __DIR__ ) . '/analytic-bridge.php', 'analyticbridge_plugin_init' );
+register_activation_hook(dirname(__DIR__) . '/analytic-bridge.php', 'analyticbridge_plugin_init');
 
 /**
  * Delegate the actual initalization code to a seperate function.
@@ -41,23 +38,25 @@ register_activation_hook( dirname( __DIR__ ) . '/analytic-bridge.php', 'analytic
  * @since 0.1
  */
 function _analyticbridge_plugin_init() {
+  /* do not generate any output here. */
 
-	/* do not generate any output here. */
+  global $wpdb;
 
-	global $wpdb;
+  /* our globals aren't going to work because we switched blogs */
+  $metrics_table = $wpdb->prefix . 'analyticbridge_metrics';
+  $pages_table = $wpdb->prefix . 'analyticbridge_pages';
 
-	/* our globals aren't going to work because we switched blogs */
-	$metrics_table = $wpdb->prefix . "analyticbridge_metrics";
-	$pages_table = $wpdb->prefix . "analyticbridge_pages";
-
-	/* Run sql to create the proper tables we need. */
-	$result = $wpdb->query("
+  /* Run sql to create the proper tables we need. */
+  $result = $wpdb->query(
+    "
 
 		--							---
 		--  Create metrics table 	---
 		--							---
 
-		CREATE TABLE IF NOT EXISTS `" . $metrics_table . "` (
+		CREATE TABLE IF NOT EXISTS `" .
+      $metrics_table .
+      "` (
 			`id` int(11) NOT NULL AUTO_INCREMENT,
 			`page_id` int(11) NOT NULL,
 			`startdate` datetime NOT NULL,
@@ -69,17 +68,21 @@ function _analyticbridge_plugin_init() {
 			UNIQUE KEY `page_id` (`page_id`,`startdate`,`enddate`,`metric`)
 		) ENGINE=InnoDB  DEFAULT CHARSET=latin1
 
-	");
+	"
+  );
 
-	/* Run sql to create the proper tables we need. */
+  /* Run sql to create the proper tables we need. */
 
-	$result = $wpdb->query("
+  $result = $wpdb->query(
+    "
 
 		--							---
 		--  Create metrics table 	---
 		--							---
 
-		CREATE TABLE IF NOT EXISTS `" . $pages_table . "` (
+		CREATE TABLE IF NOT EXISTS `" .
+      $pages_table .
+      "` (
 			`id` int(11) NOT NULL AUTO_INCREMENT,
 			`pagepath` varchar(450) NOT NULL,
 			`post_id` int(11) NOT NULL,
@@ -87,12 +90,13 @@ function _analyticbridge_plugin_init() {
 			UNIQUE KEY `pagepath` (`pagepath`)
 		) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
-	");
+	"
+  );
 
-	// 2: Register a cron job.
-	wp_schedule_event( time(), '10m', 'analyticbridge_hourly_cron');
+  // 2: Register a cron job.
+  wp_schedule_event(time(), '10m', 'analyticbridge_hourly_cron');
 
-	update_option('analyticbridge_setting_popular_posts_halflife',14);
+  update_option('analyticbridge_setting_popular_posts_halflife', 14);
 }
 
 /**
@@ -104,29 +108,25 @@ function _analyticbridge_plugin_init() {
  * @since v0.1
  */
 function analyticbridge_plugin_deinit($networkwide) {
+  global $wpdb;
 
-	global $wpdb;
-
-	if (function_exists('is_multisite') && is_multisite()) {
-
-		// check if it is a network activation.
-		if ($networkwide) {
-
-			$old_blog = $wpdb->blogid;
-			// Get all blog ids
-			$blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
-			foreach ($blogids as $blog_id) {
-				switch_to_blog($blog_id);
-				_analyticbridge_plugin_deinit();
-			}
-			switch_to_blog($old_blog);
-			return;
-		}
-	}
-	_analyticbridge_plugin_deinit();
-
+  if (function_exists('is_multisite') && is_multisite()) {
+    // check if it is a network activation.
+    if ($networkwide) {
+      $old_blog = $wpdb->blogid;
+      // Get all blog ids
+      $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
+      foreach ($blogids as $blog_id) {
+        switch_to_blog($blog_id);
+        _analyticbridge_plugin_deinit();
+      }
+      switch_to_blog($old_blog);
+      return;
+    }
+  }
+  _analyticbridge_plugin_deinit();
 }
-register_deactivation_hook( __FILE__, 'analyticbridge_plugin_deinit' );
+register_deactivation_hook(__FILE__, 'analyticbridge_plugin_deinit');
 
 /**
  * Called on deinit for each blog in the network.
@@ -134,34 +134,40 @@ register_deactivation_hook( __FILE__, 'analyticbridge_plugin_deinit' );
  * @since 0.1
  */
 function _analyticbridge_plugin_deinit() {
+  global $wpdb;
 
-	global $wpdb;
+  /* our globals aren't going to work because we switched blogs */
+  $metrics_table = $wpdb->prefix . 'analyticbridge_metrics';
+  $pages_table = $wpdb->prefix . 'analyticbridge_pages';
 
-	/* our globals aren't going to work because we switched blogs */
-	$metrics_table 	= $wpdb->prefix . "analyticbridge_metrics";
-	$pages_table 	= $wpdb->prefix . "analyticbridge_pages";
-
-	/* Run sql to drop created tables */
-	$result = $wpdb->query("
+  /* Run sql to drop created tables */
+  $result = $wpdb->query(
+    "
 
 		--                      ---
 		--  Drop metrics table  ---
 		--                      ---
 
-		DROP TABLE  `" . $metrics_table . "`
+		DROP TABLE  `" .
+      $metrics_table .
+      "`
 
-	");
+	"
+  );
 
-	/* Run sql to drop created tables */
-	$result = $wpdb->query("
+  /* Run sql to drop created tables */
+  $result = $wpdb->query(
+    "
 
 		--                    ---
 		--  Drop pages table  ---
 		--                    ---
 
-		DROP TABLE `" . $pages_table . "` ");
+		DROP TABLE `" .
+      $pages_table .
+      '` '
+  );
 
-	// Clear hook
-	wp_clear_scheduled_hook('analyticbridge_hourly_cron');
-
+  // Clear hook
+  wp_clear_scheduled_hook('analyticbridge_hourly_cron');
 }

@@ -1,70 +1,68 @@
 <?php
 
-Class AnayticBridgePopularPosts implements Iterator {
+class AnayticBridgePopularPosts implements Iterator {
+  // array of results.
+  private $result;
 
-	// array of results.
-	private $result;
+  // used by iterator.
+  private $position;
 
-	// used by iterator.
-	private $position;
+  // was a valid query executed?
+  public $queried;
 
-	// was a valid query executed?
-	public $queried;
+  // half life to use while querying.
+  public $halflife;
 
-	// half life to use while querying.
-	public $halflife;
+  public $size = 20;
 
-	public $size = 20;
+  public $initalized = false;
 
-	public $initalized = false;
+  // returns an array of post ids that may be passed to a WP_Query object.
+  public $ids;
 
-	// returns an array of post ids that may be passed to a WP_Query object.
-	public $ids;
+  // interval to query over.
+  private $interval;
 
-	// interval to query over.
-	private $interval;
+  public function __construct() {
+    $this->position = 0;
+    $this->queried = false;
+    $this->halflife = get_option('analyticbridge_setting_popular_posts_halflife');
+    $this->initalized = true;
+  }
 
-	public function __construct() {
-		$this->position = 0;
-		$this->queried = false;
-		$this->halflife = get_option('analyticbridge_setting_popular_posts_halflife');
-		$this->initalized = true;
-	}
+  public function query() {
+    global $wpdb;
 
-	public function query() {
+    if ($this->initalized) {
+      $this->size = $this->size ?: 20;
 
-		global $wpdb;
+      // 1: Calculate a ratio coeffient
+      $tday = new DateTime('today', new DateTimeZone('America/Chicago'));
+      $now = new DateTime('', new DateTimeZone('America/Chicago'));
+      $interval = $tday->diff($now);
+      // $minutes is hours*60 + $interval->i minutes
+      $minutes = $interval->h * 60 + $interval->i;
 
-		if ($this->initalized) {
+      // $ratio is minutes passed today : minutes in today,
+      // A measure of how long today has been
+      $ratio = $minutes / (24 * 60);
 
-			$this->size = $this->size ?: 20;
-
-			// 1: Calculate a ratio coeffient
-			$tday = new DateTime('today',new DateTimeZone('America/Chicago'));
-			$now = new DateTime('',new DateTimeZone('America/Chicago'));
-			$interval = $tday->diff($now);
-			// $minutes is hours*60 + $interval->i minutes
-			$minutes = $interval->h * 60 + $interval->i;
-
-			// $ratio is minutes passed today : minutes in today,
-			// A measure of how long today has been
-			$ratio = $minutes / (24*60);
-
-			/* sql statement that pulls today's sessions, yesterday's
-			 * sessions and a weighted average of them from the database.
-			 *
-			 * A note on the calculation of weighted pageviews, using a simplified equation:
-			 *
-			 * ( ( today's sessions * $ratio ) + ( yesterday's sessions * ( 1 - $ratio ) ) returns the post's sessions count, averaged between the last 24 hours.
-			 * ( sessions count ) * 1/2 ^ ( ( post date - now ) / ( $halflife * 24 ) ) multiplies this post's sessions count by the half-life equation.
-			 * The half-life equation raises 1/2 to the power n, where n is the number of half-lifes elapsed.
-			 * $half-life is set in the plugin options in Settings > Analytic Bridge > Post halflife. It is the half-life of post popularity, in days.
-			 * A post will count half as much every $halflife days.
-			 * ( post date - now ) returns hours.
-			 * ( $halflife * 24 ) returns hours.
-			 * Dividing the post's age by the halflife-hours gives the number of half-lives that have elapsed, and thus the power that 1/2 should be raised to.
-			 */
-			$SQL = "
+      /* sql statement that pulls today's sessions, yesterday's
+       * sessions and a weighted average of them from the database.
+       *
+       * A note on the calculation of weighted pageviews, using a simplified equation:
+       *
+       * ( ( today's sessions * $ratio ) + ( yesterday's sessions * ( 1 - $ratio ) ) returns the post's sessions count, averaged between the last 24 hours.
+       * ( sessions count ) * 1/2 ^ ( ( post date - now ) / ( $halflife * 24 ) ) multiplies this post's sessions count by the half-life equation.
+       * The half-life equation raises 1/2 to the power n, where n is the number of half-lifes elapsed.
+       * $half-life is set in the plugin options in Settings > Analytic Bridge > Post halflife. It is the half-life of post popularity, in days.
+       * A post will count half as much every $halflife days.
+       * ( post date - now ) returns hours.
+       * ( $halflife * 24 ) returns hours.
+       * Dividing the post's age by the halflife-hours gives the number of half-lives that have elapsed, and thus the power that 1/2 should be raised to.
+       */
+      $SQL =
+        "
 				--							---
 				--  SELECT POPULAR POSTS 	---
 				--							---
@@ -99,7 +97,9 @@ Class AnayticBridgePopularPosts implements Iterator {
 						)
 					) AS `weighted_pageviews`
 				FROM
-					`" . PAGES_TABLE . "` as `pg`
+					`" .
+        PAGES_TABLE .
+        "` as `pg`
 				LEFT JOIN (
 					--
 					-- Nested select returns today's sessions.
@@ -108,7 +108,9 @@ Class AnayticBridgePopularPosts implements Iterator {
 						CAST(value as unsigned) as `sessions`,
 						page_id
 					FROM
-						`" . METRICS_TABLE . "` as m
+						`" .
+        METRICS_TABLE .
+        "` as m
 					WHERE
 						m.metric = 'ga:pageviews'
 					AND
@@ -123,7 +125,9 @@ Class AnayticBridgePopularPosts implements Iterator {
 						CAST(value as unsigned) as `sessions`,
 						`page_id`
 					FROM
-						`" . METRICS_TABLE . "` as m
+						`" .
+        METRICS_TABLE .
+        "` as m
 					WHERE
 						m.metric = 'ga:pageviews'
 					AND
@@ -132,97 +136,89 @@ Class AnayticBridgePopularPosts implements Iterator {
 						m.enddate < CURDATE()
 				) as `y` ON `pg`.`id` = `y`.`page_id`
 
-				LEFT JOIN `" . $wpdb->prefix . "posts` as `pst`
+				LEFT JOIN `" .
+        $wpdb->prefix .
+        "posts` as `pst`
 					ON `pst`.`id` = `pg`.`post_id`
 
 				-- For now, they must be posts.
 				WHERE `pst`.`post_type` = 'post'
 					ORDER BY `weighted_pageviews` DESC
-					LIMIT " . $this->size . ";";
+					LIMIT " .
+        $this->size .
+        ';';
 
+      $this->result = $wpdb->get_results($SQL);
 
-			$this->result = $wpdb->get_results( $SQL );
+      $this->queried = true;
+      $this->setIds();
+    }
+  }
 
-			$this->queried = true;
-			$this->setIds();
-		}
-	}
+  /**
+   * Returns a score specified by the given $pid.
+   *
+   * If the $pid is not in this list, returns false.
+   *
+   * @since v0.1
+   */
+  public function score($pid) {
+    foreach ($this as $popularPost) {
+      if ($popularPost->post_id == $pid) {
+        return $popularPost->weighted_pageviews;
+      }
+    }
 
-	/**
-	 * Returns a score specified by the given $pid.
-	 *
-	 * If the $pid is not in this list, returns false.
-	 *
-	 * @since v0.1
-	 */
-	public function score( $pid ) {
+    return false;
+  }
 
-		foreach( $this as $popularPost )
-			if ( $popularPost->post_id == $pid )
-				return $popularPost->weighted_pageviews;
+  private function setIds() {
+    $this->ids = [];
+    foreach ($this as $popPost) {
+      $this->ids[] = $popPost->post_id;
+    }
+  }
 
-		return false;
+  /** Region: Iterator functions */
 
-	}
+  public function rewind() {
+    if (!$this->queried) {
+      $this->query();
+    }
+    $this->position = 0;
+  }
 
-	private function setIds() {
-		$this->ids = array();
-		foreach( $this as $popPost ) {
-			$this->ids[] = $popPost->post_id;
-		}
-	}
+  public function current() {
+    if (!$this->queried) {
+      $this->query();
+    }
 
-	/** Region: Iterator functions */
+    return $this->result[$this->position];
+  }
 
-	public function rewind() {
+  public function key() {
+    if (!$this->queried) {
+      $this->query();
+    }
 
-		if( !$this->queried ) {
-			$this->query();
-		}
-		$this->position = 0;
+    return $this->position;
+  }
 
-	}
+  public function next() {
+    if (!$this->queried) {
+      $this->query();
+    }
 
-	public function current() {
+    $this->position += 1;
 
-		if( !$this->queried ) {
-			$this->query();
-		}
+    return $this->position;
+  }
 
-		return $this->result[$this->position];
+  public function valid() {
+    if (!$this->queried) {
+      $this->query();
+    }
 
-	}
-
-	public function key() {
-
-		if( !$this->queried ) {
-			$this->query();
-		}
-
-		return $this->position;
-
-	}
-
-	public function next() {
-
-		if( !$this->queried ) {
-			$this->query();
-		}
-
-		$this->position += 1;
-
-		return $this->position;
-
-	}
-
-	public function valid() {
-
-		if( !$this->queried ) {
-			$this->query();
-		}
-
-		return isset( $this->result[$this->position] );
-
-	}
-
+    return isset($this->result[$this->position]);
+  }
 }
