@@ -90,8 +90,8 @@ add_action('admin_footer', 'analyticbridge_blog_options_admin_head');
  */
 function analyticbridge_plugin_menu() {
   add_options_page(
-    'GA Popular Posts Options', // $page_title title of the page.
-    'GA Popular Posts', // $menu_title the text to be used for the menu.
+    'Analytics Bridge Options', // $page_title title of the page.
+    'Analytics Bridge', // $menu_title the text to be used for the menu.
     'manage_options', // $capability required capability for display.
     'analytic-bridge', // $menu_slug unique slug for menu.
     'analyticbridge_option_page_html' // $function callback.
@@ -113,7 +113,7 @@ function analyticbridge_option_page_html() {
   }
 
   echo '<div class="wrap">';
-  echo '<h2>Google Analytics Popular Posts</h2>';
+  echo '<h2>Analytics Bridge</h2>';
   echo '<form method="post" action="options.php">';
   settings_fields('analytic-bridge');
   do_settings_sections('analytic-bridge');

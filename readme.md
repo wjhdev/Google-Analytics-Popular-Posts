@@ -15,8 +15,8 @@ We're currently calling and caching the `ga:pageviews` to the database for each 
 
 ###### _How do I query the data myself?_
 
-The data is stored across two database tables. The first (`analyticbridge_pages`) stores each `ga:pagepath` with a unique id and corresponding post id (if it exists).
+The data is stored across two database tables. The first (`bt_analyticsbridge_pages`) stores each `ga:pagepath` with a unique id and corresponding post id (if it exists).
 
-The second table (`analyticbridge_metrics`) relates a `page_id` to a metric & value over a start & end date.
+The second table (`bt_analyticsbridge_metrics`) relates a `page_id` to a metric & value over a start & end date.
 
 To query this data yourself, find the corresponding page_id from the pages table and select using it from the metrics table. This can be accomplished using joins.
