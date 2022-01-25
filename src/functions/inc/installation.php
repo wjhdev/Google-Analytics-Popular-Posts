@@ -64,3 +64,4 @@ function bt_analyticsbridge_plugin_init() {
 
   update_option('bt_analyticsbridge_setting_popular_posts_halflife', 14);
 }
+add_action('init', 'bt_analyticsbridge_plugin_init');
