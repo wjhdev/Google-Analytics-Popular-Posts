@@ -20,6 +20,7 @@ loader/
 log.txt
 *.sublime-project
 *.sublime-workspace
+*.phar
 
 .stencil/
 .idea/
