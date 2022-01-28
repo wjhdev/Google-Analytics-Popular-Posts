@@ -1,43 +1,6 @@
 <?php
 
 /**
- * Functions for activating/deactivating the plugin.
- */
-include_once plugin_dir_path(__FILE__) . 'inc/analytic-bridge-installing.php';
-
-/**
- * Add new intervals for cron jobs.
- *
- * @since 0.1
- */
-function new_interval($interval) {
-  $interval['10m'] = ['interval' => 10 * 60, 'display' => 'Once every 10 minutes'];
-  $interval['15m'] = ['interval' => 15 * 60, 'display' => 'Once every 15 minutes'];
-  $interval['20m'] = ['interval' => 20 * 60, 'display' => 'Once every 20 minutes'];
-  $interval['30m'] = ['interval' => 30 * 60, 'display' => 'Once every 30 minutes'];
-  $interval['45m'] = ['interval' => 45 * 60, 'display' => 'Once every 45 minutes'];
-
-  return $interval;
-}
-add_filter('cron_schedules', 'new_interval');
-
-/**
- * ----------------------------------------------------------------------------------------------
- * Step 2: Connect to Google & create an api token.
- * ----------------------------------------------------------------------------------------------
- */
-
-function largo_die($e) {
-  largo_pre_print($e);
-}
-
-function largo_pre_print($pre) {
-  echo "<pre style='background:#fff;border:1px solid #eee;overflow-y:scroll'>";
-  print_r($pre);
-  echo '</pre>';
-}
-
-/**
  * A cron job that loads data from google analytics into out analytic tables.
  *
  * @since v0.2
@@ -46,7 +9,7 @@ function largo_pre_print($pre) {
  *
  * @param boolean $verbose set to true to print
  */
-function largo_anaylticbridge_cron($verbose = false) {
+function _bt_anaylticsbridge_cron($verbose = false) {
   global $wpdb;
 
   $rustart = getrusage(); // track usage.
@@ -81,9 +44,9 @@ function largo_anaylticbridge_cron($verbose = false) {
 
   $analytics = new Analytic_Bridge_Service($client);
 
-  query_and_save_analytics($analytics, 'today', $verbose);
-  query_and_save_analytics($analytics, 'yesterday', $verbose);
-  purge_old_analytics();
+  bt_analyticsbridge_query_analytics($analytics, 'today', $verbose);
+  bt_analyticsbridge_query_analytics($analytics, 'yesterday', $verbose);
+  _bt_analyticsbridge_purge_old_analytics();
 
   if ($verbose) {
     echo "Google Analytics Popular Posts cron executed successfully\n";
@@ -109,7 +72,7 @@ function largo_anaylticbridge_cron($verbose = false) {
 
   return;
 }
-add_action('analyticbridge_hourly_cron', 'largo_anaylticbridge_cron');
+add_action('bt_analyticsbridge_hourly_cron', '_bt_anaylticsbridge_cron');
 
 /**
  * Queries analytics and saves them to the table for the given start date.
@@ -119,7 +82,7 @@ add_action('analyticbridge_hourly_cron', 'largo_anaylticbridge_cron');
  *
  * @param boolean $verbose whether we should print while we do it.
  */
-function query_and_save_analytics($analytics, $startdate, $verbose = false) {
+function bt_analyticsbridge_query_analytics($analytics, $startdate, $verbose = false) {
   global $wpdb;
 
   $start = $startdate;
@@ -274,7 +237,7 @@ function query_and_save_analytics($analytics, $startdate, $verbose = false) {
 /**
  * Get rid of any records in the metrics table having a startdate older than 2 days ago
  */
-function purge_old_analytics() {
+function _bt_analyticsbridge_purge_old_analytics() {
   global $wpdb;
   $SQL =
     'delete ' .
@@ -284,103 +247,3 @@ function purge_old_analytics() {
     ' where startdate < (curdate()  - interval 2 day);';
   $wpdb->query($SQL);
 }
-
-/**
- * Static logging class for cron jobs.
- */
-class AnalyticBridgeLog {
-  static $date = null;
-  static $errorLog = false;
-  static $printLog = false;
-
-  static function log($log) {
-    if (!WP_DEBUG) {
-      return;
-    }
-
-    if ($date === null) {
-      $date = new DateTime('now', new DateTimeZone('America/Chicago'));
-    }
-
-    $time = $date->format('D M d h:i:s');
-    $log = "[$time] $log\n";
-  }
-}
-
-/**
- * Class to fake Google Analytics requests.
- *
- * This class extends Google_Service_Analytics and fakes requests to the
- * Google API for debugging by generating data based on the global Wordpress
- * object.
- *
- * Needs work.
- *
- * @since v0.1
- */
-class Google_Service_Analytics_Generator extends Google_Service_Analytics {
-  public $data_ga;
-
-  /**
-   * Construct a new Analytics Generator.
-   *
-   * data_ga is set to ourselves. We handle the get function
-   * internally.
-   *
-   * @since v0.1
-   */
-  public function __construct(Google_Client $client) {
-    $this->data_ga = $this;
-  }
-
-  /**
-   * Overrided Google_Service_Analytics_DataGa_Resource get function.
-   *
-   * @return Google_Service_Analytics_GaData Object with proper row values.
-   */
-  public function get($ids, $startDate, $endDate, $metrics, $optParams = []) {
-    $rows = [];
-    $metrics = explode(',', $metrics);
-
-    $the_query = new WP_Query(['post_type' => 'post']);
-
-    if ($the_query->have_posts()):
-      while ($the_query->have_posts()):
-        $the_query->the_post();
-
-        $r = [];
-        $url = parse_url(get_permalink());
-        $r[0] = $url['path'] . $url['query'];
-
-        foreach ($metrics as $m) {
-          if ($m == 'ga:sessions') {
-            $r[] = 100 + rand(-25, 25);
-          } elseif ($m == 'ga:pageviews') {
-            $r[] = 130 + rand(-25, 25);
-          } elseif ($m == 'ga:exits') {
-            $r[] = 30 + rand(-10, 10);
-          } elseif ($m == 'ga:bounceRate') {
-            $r[] = 60 + rand(-30, 40);
-          } elseif ($m == 'ga:avgSessionDuration') {
-            $r[] = 231 + rand(-100, 100);
-          } elseif ($m = 'ga:avgTimeOnPage') {
-            $r[] = 140 + rand(-40, 130);
-          } else {
-            $r[] = 0;
-          }
-        }
-
-        $rows[] = $r;
-      endwhile;
-
-      wp_reset_postdata();
-    endif;
-
-    $toRet = new Google_Service_Analytics_GaData();
-    $toRet->rows = $rows;
-
-    return $toRet;
-  }
-}
-
-include_once plugin_dir_path(__FILE__) . 'classes/AnalyticBridgePopularPosts.php';

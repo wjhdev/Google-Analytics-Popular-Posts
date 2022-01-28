@@ -1,7 +1,34 @@
 <?php
 
-class AnalyticsBridge {
+class GoogleClientAuthProvider {
+  private $clientID;
+  private $clientSecret;
+
+  private $accessToken;
+  private $refreshToken;
+
+  function __construct($clientID, $clientSecret) {
+  }
+
+  /**
+   *
+   */
+  function authenticate($accessToken, $refreshToken) {
+    return true;
+  }
+
+  function client() {
+  }
 }
+
+$googleClientAuthProvider = new GoogleClientAuthProvider('id', 'secret');
+
+if ($googleClientAuthProvider->authenticate('access', 'refresh')) {
+  $googleClient = $googleClientAuthProvider->client();
+} else {
+  // error authenticating
+}
+
 class AnalyticBridge {
   /**
    * Refers to a single instance of this class.
@@ -122,11 +149,13 @@ class AnalyticBridge {
       if ($auth):
         try {
           $client->setAccessToken(get_option('analyticbridge_access_token'));
+
           if ($client->isAccessTokenExpired() && get_option('analyticbridge_refresh_token')) {
             $token = get_option('analyticbridge_refresh_token');
             $accesstoken = $client->refreshToken($token);
             update_option('analyticbridge_access_token', $client->getAccessToken());
           }
+
           $this->clientAuthenticated = true;
         } catch (Google_Auth_Exception $error) {
           if ($e) {
@@ -185,6 +214,9 @@ function analytic_bridge_authenticate_google_client($code, &$e = null) {
   $client->authenticate($code);
   update_option('analyticbridge_access_token', $client->getAccessToken());
   update_option('analyticbridge_refresh_token', $client->getRefreshToken());
+
+  //
+  //
   update_option('analyticbridge_authenticated_user', get_current_user_id());
   update_option('analyticbridge_authenticated_date_gmt', current_time('mysql', true));
 }

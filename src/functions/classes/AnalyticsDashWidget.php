@@ -10,14 +10,14 @@
  *
  * This function is hooked into the 'wp_dashboard_setup' action below.
  */
-function analyticbridge_add_dashboard_widgets() {
+function bt_analyticsbridge_add_dashboard_widgets() {
   wp_add_dashboard_widget(
-    'analyticbridge_popular_posts', // Widget slug.
+    'bt_analyticsbridge_popular_posts', // Widget slug.
     'Popular Posts', // Title.
-    'analyticbridge_popular_posts_widget' // Display function.
+    'bt_analyticsbridge_popular_posts_widget' // Display function.
   );
 }
-add_action('wp_dashboard_setup', 'analyticbridge_add_dashboard_widgets');
+add_action('wp_dashboard_setup', 'bt_analyticsbridge_add_dashboard_widgets');
 
 /**
  * Outputs the HTML for the popular post widget.
@@ -26,14 +26,14 @@ add_action('wp_dashboard_setup', 'analyticbridge_add_dashboard_widgets');
  *
  * @since 0.1
  */
-function analyticbridge_popular_posts_widget() {
+function bt_analyticsbridge_popular_posts_widget() {
   global $wpdb;
 
   // Display whatever it is you want to show.
   echo '<p>Most popular posts from Google Analytics, with a relative weighting average.</p>';
 
-  $popPosts = new AnayticBridgePopularPosts();
-  $popPosts->size = '5';
+  $halflife = get_option('analyticbridge_setting_popular_posts_halflife');
+  $popPosts = new AnalyticsBridgePopularPosts(10, $halflife);
 
   // 3: Print list
 

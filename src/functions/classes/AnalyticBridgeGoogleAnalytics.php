@@ -1,6 +1,7 @@
 <?php
 
 require_once '/srv/vendor/autoload.php';
+
 $AnalyticBridge = new AnalyticBridgeGoogleAnalytics();
 
 class AnalyticBridgeGoogleAnalytics {

@@ -25,13 +25,14 @@ require_once plugin_dir_path(__FILE__) . 'Analytic_Bridge_Service.php';
  */
 require_once 'inc/blog-options.php';
 
-include_once plugin_dir_path(__FILE__) . 'classes/AnalyticsDashWidget.php';
-include_once plugin_dir_path(__FILE__) . 'classes/AnalyticsPopularWidget.php';
-include_once plugin_dir_path(__FILE__) . 'classes/AnalyticBridgeGoogleAnalytics.php';
+require_once plugin_dir_path(__FILE__) . 'classes/AnalyticsDashWidget.php';
+require_once plugin_dir_path(__FILE__) . 'classes/AnalyticsBridgePopularPosts.php';
+require_once plugin_dir_path(__FILE__) . 'classes/AnalyticBridgeGoogleAnalytics.php';
 
 /**
  * Functions for activating/deactivating the plugin.
  */
-include_once 'inc/installation.php';
+require_once 'inc/installation.php';
 
-include 'analytics-bridge.php';
+require_once 'inc/ga-interface.php';
+require_once 'inc/mock-ga-interface.php';

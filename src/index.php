@@ -16,12 +16,13 @@
 
   <analytics-bridge></analytics-bridge>
   <div class='popular-posts sidebar-thing'>
-	<?php the_widget('AnalyticBridgePopularPostWidget', [
-   'num_posts' => 8,
-   'title' => 'Popular Posts',
- ]); ?>
+	<?php
+ $halflife = get_option('analyticbridge_setting_popular_posts_halflife');
+ $popPosts = new AnalyticsBridgePopularPosts(20, $halflife);
+ echo print_r($popPosts, true);
+ ?>
 	</div>
-
+asdf
   <script>
   var element = document.getElementById('theme')
   element.global = webpress

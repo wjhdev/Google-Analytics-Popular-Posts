@@ -1,21 +1,16 @@
 <?php
 
-class AnayticBridgePopularPosts implements Iterator {
+class AnalyticsBridgePopularPosts implements Iterator {
   // array of results.
   private $result;
 
   // used by iterator.
   private $position;
 
-  // was a valid query executed?
-  public $queried;
-
   // half life to use while querying.
   public $halflife;
 
-  public $size = 20;
-
-  public $initalized = false;
+  private $size = 20;
 
   // returns an array of post ids that may be passed to a WP_Query object.
   public $ids;
@@ -23,46 +18,43 @@ class AnayticBridgePopularPosts implements Iterator {
   // interval to query over.
   private $interval;
 
-  public function __construct() {
+  public function __construct($size, $halflife) {
+    $this->size = $size;
     $this->position = 0;
-    $this->queried = false;
-    $this->halflife = get_option('analyticbridge_setting_popular_posts_halflife');
-    $this->initalized = true;
+    $this->halflife = $halflife;
+    $this->query();
   }
 
   public function query() {
     global $wpdb;
 
-    if ($this->initalized) {
-      $this->size = $this->size ?: 20;
+    // 1: Calculate a ratio coeffient
+    $tday = new DateTime('today', new DateTimeZone('America/Chicago'));
+    $now = new DateTime('', new DateTimeZone('America/Chicago'));
+    $interval = $tday->diff($now);
+    // $minutes is hours*60 + $interval->i minutes
+    $minutes = $interval->h * 60 + $interval->i;
 
-      // 1: Calculate a ratio coeffient
-      $tday = new DateTime('today', new DateTimeZone('America/Chicago'));
-      $now = new DateTime('', new DateTimeZone('America/Chicago'));
-      $interval = $tday->diff($now);
-      // $minutes is hours*60 + $interval->i minutes
-      $minutes = $interval->h * 60 + $interval->i;
+    // $ratio is minutes passed today : minutes in today,
+    // A measure of how long today has been
+    $ratio = $minutes / (24 * 60);
 
-      // $ratio is minutes passed today : minutes in today,
-      // A measure of how long today has been
-      $ratio = $minutes / (24 * 60);
-
-      /* sql statement that pulls today's sessions, yesterday's
-       * sessions and a weighted average of them from the database.
-       *
-       * A note on the calculation of weighted pageviews, using a simplified equation:
-       *
-       * ( ( today's sessions * $ratio ) + ( yesterday's sessions * ( 1 - $ratio ) ) returns the post's sessions count, averaged between the last 24 hours.
-       * ( sessions count ) * 1/2 ^ ( ( post date - now ) / ( $halflife * 24 ) ) multiplies this post's sessions count by the half-life equation.
-       * The half-life equation raises 1/2 to the power n, where n is the number of half-lifes elapsed.
-       * $half-life is set in the plugin options in Settings > Analytic Bridge > Post halflife. It is the half-life of post popularity, in days.
-       * A post will count half as much every $halflife days.
-       * ( post date - now ) returns hours.
-       * ( $halflife * 24 ) returns hours.
-       * Dividing the post's age by the halflife-hours gives the number of half-lives that have elapsed, and thus the power that 1/2 should be raised to.
-       */
-      $SQL =
-        "
+    /* sql statement that pulls today's sessions, yesterday's
+     * sessions and a weighted average of them from the database.
+     *
+     * A note on the calculation of weighted pageviews, using a simplified equation:
+     *
+     * ( ( today's sessions * $ratio ) + ( yesterday's sessions * ( 1 - $ratio ) ) returns the post's sessions count, averaged between the last 24 hours.
+     * ( sessions count ) * 1/2 ^ ( ( post date - now ) / ( $halflife * 24 ) ) multiplies this post's sessions count by the half-life equation.
+     * The half-life equation raises 1/2 to the power n, where n is the number of half-lifes elapsed.
+     * $half-life is set in the plugin options in Settings > Analytic Bridge > Post halflife. It is the half-life of post popularity, in days.
+     * A post will count half as much every $halflife days.
+     * ( post date - now ) returns hours.
+     * ( $halflife * 24 ) returns hours.
+     * Dividing the post's age by the halflife-hours gives the number of half-lives that have elapsed, and thus the power that 1/2 should be raised to.
+     */
+    $SQL =
+      "
 				--							---
 				--  SELECT POPULAR POSTS 	---
 				--							---
@@ -98,8 +90,8 @@ class AnayticBridgePopularPosts implements Iterator {
 					) AS `weighted_pageviews`
 				FROM
 					`" .
-        PAGES_TABLE .
-        "` as `pg`
+      PAGES_TABLE .
+      "` as `pg`
 				LEFT JOIN (
 					--
 					-- Nested select returns today's sessions.
@@ -109,8 +101,8 @@ class AnayticBridgePopularPosts implements Iterator {
 						page_id
 					FROM
 						`" .
-        METRICS_TABLE .
-        "` as m
+      METRICS_TABLE .
+      "` as m
 					WHERE
 						m.metric = 'ga:pageviews'
 					AND
@@ -126,8 +118,8 @@ class AnayticBridgePopularPosts implements Iterator {
 						`page_id`
 					FROM
 						`" .
-        METRICS_TABLE .
-        "` as m
+      METRICS_TABLE .
+      "` as m
 					WHERE
 						m.metric = 'ga:pageviews'
 					AND
@@ -137,22 +129,21 @@ class AnayticBridgePopularPosts implements Iterator {
 				) as `y` ON `pg`.`id` = `y`.`page_id`
 
 				LEFT JOIN `" .
-        $wpdb->prefix .
-        "posts` as `pst`
+      $wpdb->prefix .
+      "posts` as `pst`
 					ON `pst`.`id` = `pg`.`post_id`
 
 				-- For now, they must be posts.
 				WHERE `pst`.`post_type` = 'post'
 					ORDER BY `weighted_pageviews` DESC
 					LIMIT " .
-        $this->size .
-        ';';
+      $this->size .
+      ';';
 
-      $this->result = $wpdb->get_results($SQL);
+    $this->result = $wpdb->get_results($SQL);
 
-      $this->queried = true;
-      $this->setIds();
-    }
+    $this->queried = true;
+    $this->setIds();
   }
 
   /**
