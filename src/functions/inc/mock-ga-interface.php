@@ -13,6 +13,7 @@
  */
 class Google_Service_Analytics_Generator extends Google_Service_Analytics {
   public $data_ga;
+  public $client;
 
   /**
    * Construct a new Analytics Generator.
@@ -24,6 +25,7 @@ class Google_Service_Analytics_Generator extends Google_Service_Analytics {
    */
   public function __construct(Google_Client $client) {
     $this->data_ga = $this;
+    $this->client = $client;
   }
 
   /**

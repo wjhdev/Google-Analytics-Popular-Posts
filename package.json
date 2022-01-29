@@ -27,12 +27,13 @@
   },
   "dependencies": {
     "@stencil/core": "^2.11.0",
-    "@webpress/core": "^0.0.17"
+    "@webpress/core": "file:./../webpress/src/packages/core"
   },
   "devDependencies": {
     "@prettier/plugin-php": "^0.17.6",
     "@stencil/sass": "^1.5.2",
     "@types/jest": "^26.0.24",
+    "@webpress/theme": "^0.0.17",
     "jest": "^26.6.3",
     "jest-cli": "^26.6.3",
     "prettier": "^2.5.1",

@@ -3,11 +3,7 @@
 /**
  * A cron job that loads data from google analytics into out analytic tables.
  *
- * @since v0.2
- *
- * @uses get_site_url
- *
- * @param boolean $verbose set to true to print
+ * @param boolean $verbose set to true to print verbose output
  */
 function _bt_anaylticsbridge_cron($verbose = false) {
   global $wpdb;
@@ -55,13 +51,6 @@ function _bt_anaylticsbridge_cron($verbose = false) {
     echo "\nEnd analyticbridge_cron\n";
   }
 
-  // Script end
-  function rutime($ru, $rus, $index) {
-    return $ru["ru_$index.tv_sec"] * 1000 +
-      intval($ru["ru_$index.tv_usec"] / 1000) -
-      ($rus["ru_$index.tv_sec"] * 1000 + intval($rus["ru_$index.tv_usec"] / 1000));
-  }
-
   $ru = getrusage();
   if ($verbose) {
     echo "\nThis process used " . rutime($ru, $rustart, 'utime') . " ms for its computations\n";
@@ -73,6 +62,13 @@ function _bt_anaylticsbridge_cron($verbose = false) {
   return;
 }
 add_action('bt_analyticsbridge_hourly_cron', '_bt_anaylticsbridge_cron');
+
+// Script end
+function rutime($ru, $rus, $index) {
+  return $ru["ru_$index.tv_sec"] * 1000 +
+    intval($ru["ru_$index.tv_usec"] / 1000) -
+    ($rus["ru_$index.tv_sec"] * 1000 + intval($rus["ru_$index.tv_usec"] / 1000));
+}
 
 /**
  * Queries analytics and saves them to the table for the given start date.

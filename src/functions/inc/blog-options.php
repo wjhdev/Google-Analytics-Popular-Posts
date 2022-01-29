@@ -37,49 +37,62 @@ function analyticbridge_blog_options_admin_head() {
   $client = analytic_bridge_google_client();
   $accessToken = json_decode(get_option('analyticbridge_access_token'));
   ?>
-	<!-- Google Analytics Embed API -->
-	<script>
-	(function(w,d,s,g,js,fjs){
-	  g=w.gapi||(w.gapi={});g.analytics={q:[],ready:function(cb){this.q.push(cb)}};
-	  js=d.createElement(s);fjs=d.getElementsByTagName(s)[0];
-	  js.src='https://apis.google.com/js/platform.js';
-	  fjs.parentNode.insertBefore(js,fjs);js.onload=function(){g.load('analytics')};
-	}(window,document,'script'));
-	</script>
+<!-- Google Analytics Embed API -->
+<script>
+(function(w, d, s, g, js, fjs) {
+    g = w.gapi || (w.gapi = {});
+    g.analytics = {
+        q: [],
+        ready: function(cb) {
+            this.q.push(cb)
+        }
+    };
+    js = d.createElement(s);
+    fjs = d.getElementsByTagName(s)[0];
+    js.src = 'https://apis.google.com/js/platform.js';
+    fjs.parentNode.insertBefore(js, fjs);
+    js.onload = function() {
+        g.load('analytics')
+    };
+}(window, document, 'script'));
+</script>
 
-	<script>
-	gapi.analytics.ready(function() {
-	  // 1: Authorize the user.
-	  var CLIENT_ID = '<?php echo analyticbridge_client_id(); ?>';
+<script>
+gapi.analytics.ready(function() {
+    // 1: Authorize the user.
+    var CLIENT_ID = '<?php echo analyticbridge_client_id(); ?>';
 
-	  gapi.analytics.auth.authorize({
-		container: 'auth-button',
-		clientid: CLIENT_ID,
-		serverAuth: {
-			access_token: '<?php echo $accessToken->access_token; ?>',
-		}
-	  });
+    gapi.analytics.auth.authorize({
+        container: 'auth-button',
+        clientid: CLIENT_ID,
+        serverAuth: {
+            access_token: '<?php echo $accessToken->access_token; ?>',
+        }
+    });
 
-	// 2: Create the view selector.
-	jQuery('input[name=analyticbridge_setting_account_profile_id]').before(jQuery('<div id="google-view-selector"></div>'));
-	var currentView = jQuery('input[name=analyticbridge_setting_account_profile_id]').attr('value');
-	var viewSelector = new gapi.analytics.ViewSelector({
-	  container: 'google-view-selector',
-	  ids: {currentView}
-	});
+    // 2: Create the view selector.
+    jQuery('input[name=analyticbridge_setting_account_profile_id]').before(jQuery(
+        '<div id="google-view-selector"></div>'));
+    var currentView = jQuery('input[name=analyticbridge_setting_account_profile_id]').attr('value');
+    var viewSelector = new gapi.analytics.ViewSelector({
+        container: 'google-view-selector',
+        ids: {
+            currentView
+        }
+    });
 
-	// 3: Hook it all up.
-	var loaded = false;
-	viewSelector.once('change',function(ids) {
-		viewSelector.on('change', function(ids) {
-			jQuery('input[name=analyticbridge_setting_account_profile_id]').attr('value',ids);
-		});
-	});
+    // 3: Hook it all up.
+    var loaded = false;
+    viewSelector.once('change', function(ids) {
+        viewSelector.on('change', function(ids) {
+            jQuery('input[name=analyticbridge_setting_account_profile_id]').attr('value', ids);
+        });
+    });
 
-	viewSelector.execute();
+    viewSelector.execute();
 
-	});
-	</script><?php
+});
+</script><?php
 }
 add_action('admin_footer', 'analyticbridge_blog_options_admin_head');
 
@@ -374,15 +387,15 @@ function analyticbridge_setting_api_token_connect_button() {
       // Analytic Bridge is NOT authenticated.
       // We still need it to create an authentication URL.
       $client = analytic_bridge_google_client(false); ?>
-				<a href="<?php echo $client->createAuthUrl(); ?>"  class='google-button'><?php _e(
+<a href="<?php echo $client->createAuthUrl(); ?>" class='google-button'><?php _e(
   'Connect to Google Analytics',
   'gapp'
 ); ?></a>
-				<p class="description"><?php _e(
+<p class="description"><?php _e(
       'A user with read access to your organization\'s Google Analytics profile must connect their Google Account.',
       'gapp'
     ); ?></p>
-			<?php
+<?php
     } else {
 
       // We have an access token, try to use it.
@@ -391,18 +404,18 @@ function analyticbridge_setting_api_token_connect_button() {
       $user = $service->userinfo->get();
       ?>
 
-			<div class="google-chip">
-				<?php if (!empty($user->picture)): ?>
-				<span class="google-user-image">
-					<img src="<?php echo $user->picture; ?>" />
-				</span>
-				<?php endif; ?>
-				<span class="google-user-name">
-					<?php echo 'Authenticated as ' . $user->getName(); ?>
-				</span>
-			</div>
-			<!-- todo: <p class="description">Disconnect this user.</p> -->
-			<?php if (get_option('analyticbridge_authenticated_user')) {
+<div class="google-chip">
+    <?php if (!empty($user->picture)): ?>
+    <span class="google-user-image">
+        <img src="<?php echo $user->picture; ?>" />
+    </span>
+    <?php endif; ?>
+    <span class="google-user-name">
+        <?php echo 'Authenticated as ' . $user->getName(); ?>
+    </span>
+</div>
+<!-- todo: <p class="description">Disconnect this user.</p> -->
+<?php if (get_option('analyticbridge_authenticated_user')) {
 
      $userdata = get_userdata(get_option('analyticbridge_authenticated_user'));
      $username = $userdata->user_login;
@@ -411,20 +424,20 @@ function analyticbridge_setting_api_token_connect_button() {
      $authenticated_date = get_date_from_gmt($authenticated_date);
      $authenticated_date = mysql2date('M d, Y', $authenticated_date);
      ?>
-			<p class="description">
-				<?php printf(__('by WordPress user "%1$s" on %2$s', 'gapp'), $username, $authenticated_date); ?>
-			</p>
-			<?php
+<p class="description">
+    <?php printf(__('by WordPress user "%1$s" on %2$s', 'gapp'), $username, $authenticated_date); ?>
+</p>
+<?php
    }
     }
   } else {
      ?>
-			<span class='google-button disabled'><?php _e('Google Analytics not connected', 'gapp'); ?></span>
-			<p class="description"><?php _e(
+<span class='google-button disabled'><?php _e('Google Analytics not connected', 'gapp'); ?></span>
+<p class="description"><?php _e(
      'You must enter a Google Client ID and Client Secret above, and press the "Save Changes" button, before you can connect Google Analytics.',
      'gapp'
    ); ?></p>
-		<?php
+<?php
   }
 }
 

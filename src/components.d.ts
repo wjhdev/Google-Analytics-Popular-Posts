@@ -5,33 +5,55 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
+import { Connection, Post } from "@webpress/core";
 export namespace Components {
-    interface AnalyticsBridge {
+    interface AbDashWidget {
+        "global": Connection.Context;
+    }
+    interface AbPopularPosts {
+        "global": Connection.Context;
+        "renderPost": (post: Post, weight: number) => any;
+        "size": any;
     }
 }
 declare global {
-    interface HTMLAnalyticsBridgeElement extends Components.AnalyticsBridge, HTMLStencilElement {
+    interface HTMLAbDashWidgetElement extends Components.AbDashWidget, HTMLStencilElement {
     }
-    var HTMLAnalyticsBridgeElement: {
-        prototype: HTMLAnalyticsBridgeElement;
-        new (): HTMLAnalyticsBridgeElement;
+    var HTMLAbDashWidgetElement: {
+        prototype: HTMLAbDashWidgetElement;
+        new (): HTMLAbDashWidgetElement;
+    };
+    interface HTMLAbPopularPostsElement extends Components.AbPopularPosts, HTMLStencilElement {
+    }
+    var HTMLAbPopularPostsElement: {
+        prototype: HTMLAbPopularPostsElement;
+        new (): HTMLAbPopularPostsElement;
     };
     interface HTMLElementTagNameMap {
-        "analytics-bridge": HTMLAnalyticsBridgeElement;
+        "ab-dash-widget": HTMLAbDashWidgetElement;
+        "ab-popular-posts": HTMLAbPopularPostsElement;
     }
 }
 declare namespace LocalJSX {
-    interface AnalyticsBridge {
+    interface AbDashWidget {
+        "global"?: Connection.Context;
+    }
+    interface AbPopularPosts {
+        "global"?: Connection.Context;
+        "renderPost"?: (post: Post, weight: number) => any;
+        "size"?: any;
     }
     interface IntrinsicElements {
-        "analytics-bridge": AnalyticsBridge;
+        "ab-dash-widget": AbDashWidget;
+        "ab-popular-posts": AbPopularPosts;
     }
 }
 export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
-            "analytics-bridge": LocalJSX.AnalyticsBridge & JSXBase.HTMLAttributes<HTMLAnalyticsBridgeElement>;
+            "ab-dash-widget": LocalJSX.AbDashWidget & JSXBase.HTMLAttributes<HTMLAbDashWidgetElement>;
+            "ab-popular-posts": LocalJSX.AbPopularPosts & JSXBase.HTMLAttributes<HTMLAbPopularPostsElement>;
         }
     }
 }
