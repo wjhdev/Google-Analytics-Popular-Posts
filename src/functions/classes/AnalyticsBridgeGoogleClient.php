@@ -229,21 +229,3 @@ function analytic_bridge_authenticate_google_client($code, &$e = null) {
   bt_analyticsbridge_set_option_authenticated_user(get_current_user_id());
   bt_analyticsbridge_set_option_authenticated_date_gmt(current_time('mysql', true));
 }
-
-/**
- * If API tokens are defined for the network return true. Else, return false.
- *
- * @since v0.1
- *
- * @return boolean true if network api tokens are defined, false if otherwise.
- */
-function analyticsbridge_using_network_api_tokens() {
-  if (
-    get_site_option('analyticsbridge_network_setting_api_client_secret_network') ||
-    get_site_option('analyticsbridge_network_setting_api_client_id')
-  ) {
-    return true;
-  } else {
-    return false;
-  }
-}

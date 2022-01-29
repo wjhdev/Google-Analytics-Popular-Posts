@@ -9,7 +9,7 @@
  * Enqueue style for admin page.
  *
  */
-function analyticsbridge_blog_options_admin_style($hook) {
+function bt_analyticsbridge_blog_options_admin_style($hook) {
   if ($hook == 'settings_page_analytic-bridge') {
     wp_enqueue_style(
       'analyticsbridge_admin_style',
@@ -19,14 +19,14 @@ function analyticsbridge_blog_options_admin_style($hook) {
     );
   }
 }
-add_action('admin_enqueue_scripts', 'analyticsbridge_blog_options_admin_style');
+add_action('admin_enqueue_scripts', 'bt_analyticsbridge_blog_options_admin_style');
 
 /**
  * Google Analytics Embed API.
  *
  * @see https://developers.google.com/analytics/devguides/reporting/embed/v1/devguide
  */
-function analyticsbridge_blog_options_admin_head() {
+function bt_analyticsbridge_blog_options_admin_head() {
   /* We only give the selector to the user that authenticated in the first place */
 
   $current_user = wp_get_current_user();
@@ -95,23 +95,23 @@ gapi.analytics.ready(function() {
 });
 </script><?php
 }
-add_action('admin_footer', 'analyticsbridge_blog_options_admin_head');
+add_action('admin_footer', 'bt_analyticsbridge_blog_options_admin_head');
 
 /**
  * Register option page for the Analytic Bridge.
  *
  * @since v0.1
  */
-function analyticsbridge_plugin_menu() {
+function bt_analyticsbridge_plugin_menu() {
   add_options_page(
     'Analytics Bridge Options', // $page_title title of the page.
     'Analytics Bridge', // $menu_title the text to be used for the menu.
     'manage_options', // $capability required capability for display.
     'analytic-bridge', // $menu_slug unique slug for menu.
-    'analyticsbridge_option_page_html' // $function callback.
+    'bt_analyticsbridge_option_page_html' // $function callback.
   );
 }
-add_action('admin_menu', 'analyticsbridge_plugin_menu');
+add_action('admin_menu', 'bt_analyticsbridge_plugin_menu');
 
 /**
  * Output the HTML for the Analytic Bridge option page.
@@ -120,7 +120,7 @@ add_action('admin_menu', 'analyticsbridge_plugin_menu');
  *
  * @since v0.1
  */
-function analyticsbridge_option_page_html() {
+function bt_analyticsbridge_option_page_html() {
   // Nice try.
   if (!current_user_can('manage_options')) {
     wp_die(__('You do not have sufficient permissions to access this page.'));
@@ -189,7 +189,7 @@ function analyticsbridge_option_page_html() {
  * @since 0.1.2
  * @link https://github.com/INN/Google-Analytics-Popular-Posts/issues/59
  */
-function analyticsbridge_google_authenticate_code_post() {
+function bt_analyticsbridge_google_authenticate_code_post() {
   if (isset($_GET['code'])) {
     $client = analytic_bridge_authenticate_google_client($_GET['code']);
     // get the admin url for the analytics bridge
@@ -198,60 +198,58 @@ function analyticsbridge_google_authenticate_code_post() {
     exit();
   }
 }
-add_action('admin_init', 'analyticsbridge_google_authenticate_code_post');
+add_action('admin_init', 'bt_analyticsbridge_google_authenticate_code_post');
 
 /**
  * Registers options for the plugin.
  *
  * @since v0.1
  */
-function analyticsbridge_register_options() {
+function bt_analyticsbridge_register_options() {
   /* ------------------------------------------------------------------------------------------
    * Section 1: API settings.
    * ---------------------------------------------------------------------------------------- */
 
   // Only if network API settings aren't defined.
 
-  if (!analyticsbridge_using_network_api_tokens()) {
-    // Add a section for network option
-    add_settings_section(
-      'largo_anaytic_bridge_api_settings_section',
-      'Google API tokens',
-      'largo_anaytic_bridge_api_settings_section_intro',
-      'analytic-bridge'
-    ); // ($id, $title, $callback, $page)
+  // Add a section for network option
+  add_settings_section(
+    'bt_analyticsbridge_api_settings_section',
+    'Google API tokens',
+    'bt_analyticsbridge_api_settings_section_intro',
+    'analytic-bridge'
+  ); // ($id, $title, $callback, $page)
 
-    // Add Client ID field.
-    add_settings_field(
-      'analyticsbridge_setting_api_client_id',
-      'Google Client ID',
-      'analyticsbridge_setting_api_client_id_input',
-      'analytic-bridge',
-      'largo_anaytic_bridge_api_settings_section'
-    ); // ($id, $title, $callback, $page, $section, $args)
+  // Add Client ID field.
+  add_settings_field(
+    'bt_analyticsbridge_setting_api_client_id',
+    'Google Client ID',
+    'bt_analyticsbridge_setting_api_client_id_input',
+    'analytic-bridge',
+    'bt_analyticsbridge_api_settings_section'
+  ); // ($id, $title, $callback, $page, $section, $args)
 
-    // Add Client Secret field
-    add_settings_field(
-      'analyticsbridge_setting_api_client_secret',
-      'Google Client Secret',
-      'analyticsbridge_setting_api_client_secret_input',
-      'analytic-bridge',
-      'largo_anaytic_bridge_api_settings_section'
-    ); // ($id, $title, $callback, $page, $section, $args)
+  // Add Client Secret field
+  add_settings_field(
+    'bt_analyticsbridge_setting_api_client_secret',
+    'Google Client Secret',
+    'bt_analyticsbridge_setting_api_client_secret_input',
+    'analytic-bridge',
+    'bt_analyticsbridge_api_settings_section'
+  ); // ($id, $title, $callback, $page, $section, $args)
 
-    // Add Client Secret field
-    add_settings_field(
-      'analyticsbridge_setting_api_token',
-      'Connect Google Analytics',
-      'analyticsbridge_setting_api_token_connect_button',
-      'analytic-bridge',
-      'largo_anaytic_bridge_api_settings_section'
-    ); // ($id, $title, $callback, $page, $section, $args)
+  // Add Client Secret field
+  add_settings_field(
+    'bt_analyticsbridge_setting_api_token',
+    'Connect Google Analytics',
+    'bt_analyticsbridge_setting_api_token_connect_button',
+    'analytic-bridge',
+    'bt_analyticsbridge_api_settings_section'
+  ); // ($id, $title, $callback, $page, $section, $args)
 
-    // Register our settings.
-    register_setting('analytic-bridge', 'analyticsbridge_setting_api_client_id');
-    register_setting('analytic-bridge', 'analyticsbridge_setting_api_client_secret');
-  }
+  // Register our settings.
+  register_setting('analytic-bridge', 'analyticsbridge_setting_api_client_id');
+  register_setting('analytic-bridge', 'analyticsbridge_setting_api_client_secret');
 
   /* ------------------------------------------------------------------------------------------
    * Section 2: Site settings.
@@ -259,17 +257,17 @@ function analyticsbridge_register_options() {
 
   // Add a section for site option page.
   add_settings_section(
-    'largo_anaytic_bridge_api_settings_section',
+    'bt_analyticsbridge_api_settings_section',
     'Google API tokens',
-    'largo_anaytic_bridge_api_settings_section_intro',
+    'bt_analyticsbridge_api_settings_section_intro',
     'analytic-bridge'
   ); // ($id, $title, $callback, $page)
 
   // Add a section for our analytic-bridge page.
   add_settings_section(
-    'largo_anaytic_bridge_account_settings_section',
+    'bt_analyticsbridge_account_settings_section',
     'Google Analytics Property',
-    'largo_anaytic_bridge_account_settings_section_intro',
+    'bt_analyticsbridge_account_settings_section_intro',
     'analytic-bridge'
   ); // ($id, $title, $callback, $page)
 
@@ -279,7 +277,7 @@ function analyticsbridge_register_options() {
     'Property View ID',
     'bt_analyticsbridge_setting_account_profile_id_input',
     'analytic-bridge',
-    'largo_anaytic_bridge_account_settings_section'
+    'bt_analyticsbridge_account_settings_section'
   ); // ($id, $title, $callback, $page, $section, $args)
 
   // Register our settings.
@@ -291,41 +289,37 @@ function analyticsbridge_register_options() {
 
   // Add a section for our analytic-bridge page.
   add_settings_section(
-    'largo_anaytic_bridge_popular_posts_settings_section',
+    'bt_analyticsbridge_popular_posts_settings_section',
     'Popular Post Settings',
-    'largo_anaytic_bridge_popular_posts_settings_section_intro',
+    'bt_analyticsbridge_popular_posts_settings_section_intro',
     'analytic-bridge'
   ); // ($id, $title, $callback, $page)
 
   // Add property field
   add_settings_field(
-    'analyticsbridge_setting_popular_posts_halflife',
+    'bt_analyticsbridge_setting_popular_posts_halflife',
     'Post halflife (in days)',
-    'analyticsbridge_setting_popular_posts_halflife_input',
+    'bt_analyticsbridge_setting_popular_posts_halflife_input',
     'analytic-bridge',
-    'largo_anaytic_bridge_popular_posts_settings_section'
+    'bt_analyticsbridge_popular_posts_settings_section'
   ); // ($id, $title, $callback, $page, $section, $args)
 
   // Register our settings.
-  register_setting('analytic-bridge', 'analyticsbridge_setting_popular_posts_halflife');
+  register_setting('analytic-bridge', 'bt_analyticsbridge_setting_popular_posts_halflife');
 }
-add_action('admin_init', 'analyticsbridge_register_options');
+add_action('admin_init', 'bt_analyticsbridge_register_options');
 
 /**
  * Intro text for our google api settings section.
  *
  * @since v0.1
  */
-function largo_anaytic_bridge_api_settings_section_intro() {
-  if (!analyticsbridge_using_network_api_tokens()) {
-    _e('<p>Enter the client id and client secret from your google developer console.</p>', 'gapp');
-    _e(
-      '<p>Notes: ensure the <em>consent screen</em> has an email and product name defined, the <em>credentials screen</em> has a proper redirect uri defined and the analytic API is enabled on the <em>API</em> screen.',
-      'gapp'
-    );
-  } else {
-    _e('<em>API tokens already set by network.</em>', 'gapp');
-  }
+function bt_analyticsbridge_api_settings_section_intro() {
+  _e('<p>Enter the client id and client secret from your google developer console.</p>', 'gapp');
+  _e(
+    '<p>Notes: ensure the <em>consent screen</em> has an email and product name defined, the <em>credentials screen</em> has a proper redirect uri defined and the analytic API is enabled on the <em>API</em> screen.',
+    'gapp'
+  );
 }
 
 /**
@@ -333,7 +327,7 @@ function largo_anaytic_bridge_api_settings_section_intro() {
  *
  * @since v0.1
  */
-function largo_anaytic_bridge_account_settings_section_intro() {
+function bt_analyticsbridge_account_settings_section_intro() {
   _e('<p>Enter the property and profile that corresponds to this site.</p>', 'gapp');
 }
 
@@ -342,7 +336,7 @@ function largo_anaytic_bridge_account_settings_section_intro() {
  *
  * @since v0.1
  */
-function largo_anaytic_bridge_popular_posts_settings_section_intro() {
+function bt_analyticsbridge_popular_posts_settings_section_intro() {
   _e(
     '<p>The post halflife is a measure of how long more-popular posts should remain in the popular posts list.</p>',
     'gapp'
@@ -358,7 +352,7 @@ function largo_anaytic_bridge_popular_posts_settings_section_intro() {
  *
  * @since v0.1
  */
-function analyticsbridge_setting_api_client_id_input() {
+function bt_analyticsbridge_setting_api_client_id_input() {
   echo '<input name="analyticsbridge_setting_api_client_id" id="analyticsbridge_setting_api_client_id" type="text" value="' .
     analyticsbridge_client_id() .
     '" class="regular-text" />';
@@ -369,7 +363,7 @@ function analyticsbridge_setting_api_client_id_input() {
  *
  * @since v0.1
  */
-function analyticsbridge_setting_api_client_secret_input() {
+function bt_analyticsbridge_setting_api_client_secret_input() {
   echo '<input name="analyticsbridge_setting_api_client_secret" id="analyticsbridge_setting_api_client_secret" type="text" value="' .
     analyticsbridge_client_secret() .
     '" class="regular-text" />';
@@ -380,7 +374,7 @@ function analyticsbridge_setting_api_client_secret_input() {
  *
  * @since v0.1
  */
-function analyticsbridge_setting_api_token_connect_button() {
+function bt_analyticsbridge_setting_api_token_connect_button() {
   if (analyticsbridge_client_id() && analyticsbridge_client_secret()) {
     // API Tokens are defined.
 
@@ -462,7 +456,7 @@ function bt_analyticsbridge_setting_account_profile_id_input() {
  *
  * @since v0.1
  */
-function analyticsbridge_setting_popular_posts_halflife_input() {
+function bt_analyticsbridge_setting_popular_posts_halflife_input() {
   echo '<input name="analyticsbridge_setting_popular_posts_halflife" id="analyticsbridge_setting_popular_posts_halflife" type="number" value="' .
     bt_analyticsbridge_option_popular_posts_halflife() .
     '" class="regular-text" />';
