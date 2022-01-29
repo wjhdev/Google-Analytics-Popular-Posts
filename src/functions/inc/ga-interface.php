@@ -11,16 +11,17 @@ function _bt_anaylticsbridge_cron($verbose = false) {
   $rustart = getrusage(); // track usage.
 
   if ($verbose) {
-    echo "\nBeginning analyticbridge_cron...\n\n";
+    echo "\nBeginning analyticsbridge_cron...\n\n";
   }
 
   if (
     !(
-      analyticbridge_client_id() &&
-      analyticbridge_client_secret() &&
-      get_option('analyticbridge_setting_account_profile_id')
+      analyticsbridge_client_id() &&
+      analyticsbridge_client_secret() &&
+      bt_analyticsbridge_option_account_profile_id()
     )
   ) {
+    echo 'profile id not set above';
     exit();
   }
 
@@ -33,7 +34,7 @@ function _bt_anaylticsbridge_cron($verbose = false) {
       echo '[Error] creating api client, message: ' . $e['message'] . "\n";
     }
     if ($verbose) {
-      echo "\nEnd analyticbridge_cron\n";
+      echo "\nEnd analyticsbridge_cron\n";
     }
     return;
   }
@@ -48,7 +49,7 @@ function _bt_anaylticsbridge_cron($verbose = false) {
     echo "Google Analytics Popular Posts cron executed successfully\n";
   }
   if ($verbose) {
-    echo "\nEnd analyticbridge_cron\n";
+    echo "\nEnd analyticsbridge_cron\n";
   }
 
   $ru = getrusage();
@@ -90,7 +91,7 @@ function bt_analyticsbridge_query_analytics($analytics, $startdate, $verbose = f
   // Make API call.
   // We use $start-$start because we're interested in one day.
   $report = $analytics->data_ga->get(
-    get_option('analyticbridge_setting_account_profile_id'),
+    bt_analyticsbridge_option_account_profile_id(),
     $start,
     $start,
     'ga:pageviews,ga:avgTimeOnPage',
@@ -107,7 +108,7 @@ function bt_analyticsbridge_query_analytics($analytics, $startdate, $verbose = f
   }
 
   $gaTimezone = $analytics->timezone($report);
-  update_option('analyticbridge_analytics_timezone', $gaTimezone);
+  bt_analyticsbridge_set_option_ga_timezone($gaTimezone);
 
   // TODO: break here if API errors.
   // TODO: paginate.
@@ -224,7 +225,7 @@ function bt_analyticsbridge_query_analytics($analytics, $startdate, $verbose = f
       echo "[Error] commiting sql to database.\n";
     }
     if ($verbose) {
-      echo "\nEnd analyticbridge_cron\n";
+      echo "\nEnd analyticsbridge_cron\n";
     }
     return;
   }

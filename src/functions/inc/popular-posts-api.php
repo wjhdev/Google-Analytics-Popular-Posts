@@ -8,7 +8,7 @@
  * without refreshing index.php
  */
 function bt_analyticsbridge_print_popular_posts_to_wp_head() {
-  $halflife = get_option('analyticbridge_setting_popular_posts_halflife');
+  $halflife = bt_analyticsbridge_option_popular_posts_halflife();
   $popPosts = new AnalyticsBridgePopularPosts(20, $halflife);
   $postJson = [];
 

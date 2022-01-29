@@ -32,7 +32,7 @@ function bt_analyticsbridge_popular_posts_widget() {
   // Display whatever it is you want to show.
   echo '<ab-dash-widget>dashyboard</ab-dash-widget><p>Most popular posts from Google Analytics, with a relative weighting average.</p>';
 
-  $halflife = get_option('analyticbridge_setting_popular_posts_halflife');
+  $halflife = bt_analyticsbridge_option_popular_posts_halflife();
   $popPosts = new AnalyticsBridgePopularPosts(10, $halflife);
 
   // 3: Print list

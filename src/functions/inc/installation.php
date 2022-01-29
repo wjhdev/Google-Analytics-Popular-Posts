@@ -62,7 +62,7 @@ function bt_analyticsbridge_plugin_init() {
   // 2: Register a cron job.
   wp_schedule_event(time(), '30m', 'bt_analyticsbridge_hourly_cron');
 
-  update_option('bt_analyticsbridge_setting_popular_posts_halflife', 14);
+  bt_analyticsbridge_set_option_popular_posts_halflife(14);
 }
 add_action('init', 'bt_analyticsbridge_plugin_init');
 

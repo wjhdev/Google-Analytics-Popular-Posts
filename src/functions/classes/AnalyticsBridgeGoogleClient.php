@@ -29,7 +29,7 @@ if ($googleClientAuthProvider->authenticate('access', 'refresh')) {
   // error authenticating
 }
 
-class AnalyticBridge {
+class analyticsbridge {
   /**
    * Refers to a single instance of this class.
    */
@@ -45,7 +45,7 @@ class AnalyticBridge {
   /**
    * Creates or returns an instance of this class.
    *
-   * @return AnalyticBridge Object A single instance of this class.
+   * @return analyticsbridge Object A single instance of this class.
    */
   public static function get_instance() {
     if (null == self::$instance) {
@@ -85,6 +85,7 @@ class AnalyticBridge {
    */
   public function getClient($auth = true, &$e = null) {
     if ($auth && $this->client && $this->clientAuthenticated) {
+      error_log('HERERERER 122');
       return $this->client;
     }
 
@@ -92,7 +93,7 @@ class AnalyticBridge {
     // Both are needed, see https://developers.google.com/identity/protocols/OAuth2
     if (
       $auth &&
-      !(get_option('analyticbridge_access_token') && get_option('analyticbridge_refresh_token'))
+      !(bt_analyticsbridge_option_access_token() && bt_analyticsbridge_option_refresh_token())
     ):
       // @todo we need better user-facing errors here if there is not a access token or a refresh token
       // including instructions on how to revoke permissions in their google account to get a new refresh token when they sign in again, because google only doles those out on the first sign-in
@@ -120,7 +121,7 @@ class AnalyticBridge {
       // return (by reference) error information.
 
       // Return our client.
-    elseif ($auth && !(analyticbridge_client_id() && analyticbridge_client_secret())):
+    elseif ($auth && !(analyticsbridge_client_id() && analyticsbridge_client_secret())):
       if ($e) {
         $e = [];
         $e['message'] =
@@ -134,8 +135,8 @@ class AnalyticBridge {
 
       $client = new Google_Client($config);
       $client->setApplicationName('Analytic_Bridge');
-      $client->setClientId(analyticbridge_client_id());
-      $client->setClientSecret(analyticbridge_client_secret());
+      $client->setClientId(analyticsbridge_client_id());
+      $client->setClientSecret(analyticsbridge_client_secret());
       $client->setRedirectUri(
         'https://localhost/wp-admin/options-general.php?page=analytic-bridge'
       );
@@ -147,28 +148,32 @@ class AnalyticBridge {
       ]);
 
       if ($auth):
+        error_log('HERERERER 1');
         try {
-          $client->setAccessToken(get_option('analyticbridge_access_token'));
+          $client->setAccessToken(bt_analyticsbridge_option_access_token());
 
-          if ($client->isAccessTokenExpired() && get_option('analyticbridge_refresh_token')) {
-            $token = get_option('analyticbridge_refresh_token');
+          if ($client->isAccessTokenExpired() && bt_analyticsbridge_option_refresh_token()) {
+            $token = bt_analyticsbridge_option_refresh_token();
             $accesstoken = $client->refreshToken($token);
-            update_option('analyticbridge_access_token', $client->getAccessToken());
+            bt_analyticsbridge_set_option_access_token($client->getAccessToken());
           }
 
           $this->clientAuthenticated = true;
         } catch (Google_Auth_Exception $error) {
+          error_log(print_r($error, true));
           if ($e) {
             $e = $error;
           }
 
           $this->clientAuthenticated = false;
+          error_log('HERERERER');
           return false;
+        } catch (Exception $error) {
         }
       endif;
 
       $this->client = $client;
-
+      error_log('HERERERER 12');
       return $client;
     endif;
   }
@@ -177,7 +182,7 @@ class AnalyticBridge {
 /**
  * Attempts to authenticate with google's servers.
  *
- * @see AnalyticBridge->getClient() for full documentation.
+ * @see analyticsbridge->getClient() for full documentation.
  *
  * @since v0.1
  *
@@ -188,8 +193,13 @@ class AnalyticBridge {
  * @return Google_Client object on success, 'false' on failure.
  */
 function analytic_bridge_google_client($auth = true, &$e = null) {
-  $AnalyticBridge = AnalyticBridge::get_instance();
-  return $AnalyticBridge->getClient($auth, $e);
+  $analyticsbridge = analyticsbridge::get_instance();
+  $client = $analyticsbridge->getClient($auth, $e);
+  if ($e != null) {
+    error_log($e);
+  }
+  error_log('here...');
+  return $client;
 }
 
 /**
@@ -212,33 +222,12 @@ function analytic_bridge_authenticate_google_client($code, &$e = null) {
   }
 
   $client->authenticate($code);
-  update_option('analyticbridge_access_token', $client->getAccessToken());
-  update_option('analyticbridge_refresh_token', $client->getRefreshToken());
 
-  //
-  //
-  update_option('analyticbridge_authenticated_user', get_current_user_id());
-  update_option('analyticbridge_authenticated_date_gmt', current_time('mysql', true));
-}
+  bt_analyticsbridge_set_option_access_token($client->getAccessToken());
+  bt_analyticsbridge_set_option_refresh_token($client->getRefreshToken());
 
-function analyticbridge_client_id() {
-  if (get_site_option('analyticbridge_network_setting_api_client_id')) {
-    $network = true;
-    return get_site_option('analyticbridge_network_setting_api_client_id');
-  } else {
-    $network = false;
-    return get_option('analyticbridge_setting_api_client_id');
-  }
-}
-
-function analyticbridge_client_secret() {
-  if (get_site_option('analyticbridge_network_setting_api_client_secret')) {
-    $network = true;
-    return get_site_option('analyticbridge_network_setting_api_client_secret');
-  } else {
-    $network = false;
-    return get_option('analyticbridge_setting_api_client_secret');
-  }
+  bt_analyticsbridge_set_option_authenticated_user(get_current_user_id());
+  bt_analyticsbridge_set_option_authenticated_date_gmt(current_time('mysql', true));
 }
 
 /**
@@ -248,10 +237,10 @@ function analyticbridge_client_secret() {
  *
  * @return boolean true if network api tokens are defined, false if otherwise.
  */
-function analyticbridge_using_network_api_tokens() {
+function analyticsbridge_using_network_api_tokens() {
   if (
-    get_site_option('analyticbridge_network_setting_api_client_secret_network') ||
-    get_site_option('analyticbridge_network_setting_api_client_id')
+    get_site_option('analyticsbridge_network_setting_api_client_secret_network') ||
+    get_site_option('analyticsbridge_network_setting_api_client_id')
   ) {
     return true;
   } else {

@@ -2,9 +2,9 @@
 
 require_once '/srv/vendor/autoload.php';
 
-$AnalyticBridge = new AnalyticBridgeGoogleAnalytics();
+$analyticsbridge = new analyticsbridgeGoogleAnalytics();
 
-class AnalyticBridgeGoogleAnalytics {
+class AnalyticsBridgeGoogleAnalytics {
   public function __construct() {
     // silence is golden.
   }

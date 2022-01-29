@@ -9,33 +9,33 @@
  * Enqueue style for admin page.
  *
  */
-function analyticbridge_blog_options_admin_style($hook) {
+function analyticsbridge_blog_options_admin_style($hook) {
   if ($hook == 'settings_page_analytic-bridge') {
     wp_enqueue_style(
-      'analyticbridge_admin_style',
+      'analyticsbridge_admin_style',
       plugins_url('css/admin.css', dirname(__FILE__)),
       false,
       '0.1'
     );
   }
 }
-add_action('admin_enqueue_scripts', 'analyticbridge_blog_options_admin_style');
+add_action('admin_enqueue_scripts', 'analyticsbridge_blog_options_admin_style');
 
 /**
  * Google Analytics Embed API.
  *
  * @see https://developers.google.com/analytics/devguides/reporting/embed/v1/devguide
  */
-function analyticbridge_blog_options_admin_head() {
+function analyticsbridge_blog_options_admin_head() {
   /* We only give the selector to the user that authenticated in the first place */
 
   $current_user = wp_get_current_user();
-  if ($current_user->ID != get_option('analyticbridge_authenticated_user')) {
+  if ($current_user->ID != bt_analyticsbridge_option_authenticated_user()) {
     return;
   }
 
   $client = analytic_bridge_google_client();
-  $accessToken = json_decode(get_option('analyticbridge_access_token'));
+  $accessToken = json_decode(bt_analyticsbridge_option_access_token());
   ?>
 <!-- Google Analytics Embed API -->
 <script>
@@ -60,7 +60,7 @@ function analyticbridge_blog_options_admin_head() {
 <script>
 gapi.analytics.ready(function() {
     // 1: Authorize the user.
-    var CLIENT_ID = '<?php echo analyticbridge_client_id(); ?>';
+    var CLIENT_ID = '<?php echo analyticsbridge_client_id(); ?>';
 
     gapi.analytics.auth.authorize({
         container: 'auth-button',
@@ -71,9 +71,9 @@ gapi.analytics.ready(function() {
     });
 
     // 2: Create the view selector.
-    jQuery('input[name=analyticbridge_setting_account_profile_id]').before(jQuery(
+    jQuery('input[name=bt_analyticsbridge_setting_account_profile_id]').before(jQuery(
         '<div id="google-view-selector"></div>'));
-    var currentView = jQuery('input[name=analyticbridge_setting_account_profile_id]').attr('value');
+    var currentView = jQuery('input[name=bt_analyticsbridge_setting_account_profile_id]').attr('value');
     var viewSelector = new gapi.analytics.ViewSelector({
         container: 'google-view-selector',
         ids: {
@@ -85,7 +85,8 @@ gapi.analytics.ready(function() {
     var loaded = false;
     viewSelector.once('change', function(ids) {
         viewSelector.on('change', function(ids) {
-            jQuery('input[name=analyticbridge_setting_account_profile_id]').attr('value', ids);
+            jQuery('input[name=bt_analyticsbridge_setting_account_profile_id]').attr('value',
+                ids);
         });
     });
 
@@ -94,23 +95,23 @@ gapi.analytics.ready(function() {
 });
 </script><?php
 }
-add_action('admin_footer', 'analyticbridge_blog_options_admin_head');
+add_action('admin_footer', 'analyticsbridge_blog_options_admin_head');
 
 /**
  * Register option page for the Analytic Bridge.
  *
  * @since v0.1
  */
-function analyticbridge_plugin_menu() {
+function analyticsbridge_plugin_menu() {
   add_options_page(
     'Analytics Bridge Options', // $page_title title of the page.
     'Analytics Bridge', // $menu_title the text to be used for the menu.
     'manage_options', // $capability required capability for display.
     'analytic-bridge', // $menu_slug unique slug for menu.
-    'analyticbridge_option_page_html' // $function callback.
+    'analyticsbridge_option_page_html' // $function callback.
   );
 }
-add_action('admin_menu', 'analyticbridge_plugin_menu');
+add_action('admin_menu', 'analyticsbridge_plugin_menu');
 
 /**
  * Output the HTML for the Analytic Bridge option page.
@@ -119,7 +120,7 @@ add_action('admin_menu', 'analyticbridge_plugin_menu');
  *
  * @since v0.1
  */
-function analyticbridge_option_page_html() {
+function analyticsbridge_option_page_html() {
   // Nice try.
   if (!current_user_can('manage_options')) {
     wp_die(__('You do not have sufficient permissions to access this page.'));
@@ -138,15 +139,15 @@ function analyticbridge_option_page_html() {
    */
 
   // check if there is a client id/secret defined.
-  if (analyticbridge_client_id() && analyticbridge_client_secret()) {
+  if (analyticsbridge_client_id() && analyticsbridge_client_secret()) {
     /* Google has posted an authenticate code back to us. */
     if (isset($_GET['code'])) {
       // ignore this section as we don't have any way to properly display it
       // If we're at the _GET['code'] part of the workflow, it's just noise
-      // @see analyticbridge_google_authenticate_code_post();
+      // @see analyticsbridge_google_authenticate_code_post();
 
       // No auth ticket loaded (yet).
-    } elseif (!get_option('analyticbridge_access_token')) {
+    } elseif (!bt_analyticsbridge_option_access_token()) {
       $client = analytic_bridge_google_client(false);
       echo "<a href='" . $client->createAuthUrl() . "'>" . __('Connect', 'gapp') . '</a>';
     } else {
@@ -161,7 +162,7 @@ function analyticbridge_option_page_html() {
       echo '<h3>Running Update...</h3>';
       echo '<pre>';
       _e('Running cron...', 'gapp');
-      largo_anaylticbridge_cron(true);
+      _bt_anaylticsbridge_cron(true);
       echo '</pre>';
     } else {
       _e('<h3>Update Analytics</h3>', 'gapp');
@@ -188,7 +189,7 @@ function analyticbridge_option_page_html() {
  * @since 0.1.2
  * @link https://github.com/INN/Google-Analytics-Popular-Posts/issues/59
  */
-function analyticbridge_google_authenticate_code_post() {
+function analyticsbridge_google_authenticate_code_post() {
   if (isset($_GET['code'])) {
     $client = analytic_bridge_authenticate_google_client($_GET['code']);
     // get the admin url for the analytics bridge
@@ -197,21 +198,21 @@ function analyticbridge_google_authenticate_code_post() {
     exit();
   }
 }
-add_action('admin_init', 'analyticbridge_google_authenticate_code_post');
+add_action('admin_init', 'analyticsbridge_google_authenticate_code_post');
 
 /**
  * Registers options for the plugin.
  *
  * @since v0.1
  */
-function analyticbridge_register_options() {
+function analyticsbridge_register_options() {
   /* ------------------------------------------------------------------------------------------
    * Section 1: API settings.
    * ---------------------------------------------------------------------------------------- */
 
   // Only if network API settings aren't defined.
 
-  if (!analyticbridge_using_network_api_tokens()) {
+  if (!analyticsbridge_using_network_api_tokens()) {
     // Add a section for network option
     add_settings_section(
       'largo_anaytic_bridge_api_settings_section',
@@ -222,34 +223,34 @@ function analyticbridge_register_options() {
 
     // Add Client ID field.
     add_settings_field(
-      'analyticbridge_setting_api_client_id',
+      'analyticsbridge_setting_api_client_id',
       'Google Client ID',
-      'analyticbridge_setting_api_client_id_input',
+      'analyticsbridge_setting_api_client_id_input',
       'analytic-bridge',
       'largo_anaytic_bridge_api_settings_section'
     ); // ($id, $title, $callback, $page, $section, $args)
 
     // Add Client Secret field
     add_settings_field(
-      'analyticbridge_setting_api_client_secret',
+      'analyticsbridge_setting_api_client_secret',
       'Google Client Secret',
-      'analyticbridge_setting_api_client_secret_input',
+      'analyticsbridge_setting_api_client_secret_input',
       'analytic-bridge',
       'largo_anaytic_bridge_api_settings_section'
     ); // ($id, $title, $callback, $page, $section, $args)
 
     // Add Client Secret field
     add_settings_field(
-      'analyticbridge_setting_api_token',
+      'analyticsbridge_setting_api_token',
       'Connect Google Analytics',
-      'analyticbridge_setting_api_token_connect_button',
+      'analyticsbridge_setting_api_token_connect_button',
       'analytic-bridge',
       'largo_anaytic_bridge_api_settings_section'
     ); // ($id, $title, $callback, $page, $section, $args)
 
     // Register our settings.
-    register_setting('analytic-bridge', 'analyticbridge_setting_api_client_id');
-    register_setting('analytic-bridge', 'analyticbridge_setting_api_client_secret');
+    register_setting('analytic-bridge', 'analyticsbridge_setting_api_client_id');
+    register_setting('analytic-bridge', 'analyticsbridge_setting_api_client_secret');
   }
 
   /* ------------------------------------------------------------------------------------------
@@ -274,15 +275,15 @@ function analyticbridge_register_options() {
 
   // Add property field
   add_settings_field(
-    'analyticbridge_setting_account_profile_id',
+    'bt_analyticsbridge_setting_account_profile_id',
     'Property View ID',
-    'analyticbridge_setting_account_profile_id_input',
+    'bt_analyticsbridge_setting_account_profile_id_input',
     'analytic-bridge',
     'largo_anaytic_bridge_account_settings_section'
   ); // ($id, $title, $callback, $page, $section, $args)
 
   // Register our settings.
-  register_setting('analytic-bridge', 'analyticbridge_setting_account_profile_id');
+  register_setting('analytic-bridge', 'bt_analyticsbridge_setting_account_profile_id');
 
   /* ------------------------------------------------------------------------------------------
    * Section 3: Popular Post settings
@@ -298,17 +299,17 @@ function analyticbridge_register_options() {
 
   // Add property field
   add_settings_field(
-    'analyticbridge_setting_popular_posts_halflife',
+    'analyticsbridge_setting_popular_posts_halflife',
     'Post halflife (in days)',
-    'analyticbridge_setting_popular_posts_halflife_input',
+    'analyticsbridge_setting_popular_posts_halflife_input',
     'analytic-bridge',
     'largo_anaytic_bridge_popular_posts_settings_section'
   ); // ($id, $title, $callback, $page, $section, $args)
 
   // Register our settings.
-  register_setting('analytic-bridge', 'analyticbridge_setting_popular_posts_halflife');
+  register_setting('analytic-bridge', 'analyticsbridge_setting_popular_posts_halflife');
 }
-add_action('admin_init', 'analyticbridge_register_options');
+add_action('admin_init', 'analyticsbridge_register_options');
 
 /**
  * Intro text for our google api settings section.
@@ -316,7 +317,7 @@ add_action('admin_init', 'analyticbridge_register_options');
  * @since v0.1
  */
 function largo_anaytic_bridge_api_settings_section_intro() {
-  if (!analyticbridge_using_network_api_tokens()) {
+  if (!analyticsbridge_using_network_api_tokens()) {
     _e('<p>Enter the client id and client secret from your google developer console.</p>', 'gapp');
     _e(
       '<p>Notes: ensure the <em>consent screen</em> has an email and product name defined, the <em>credentials screen</em> has a proper redirect uri defined and the analytic API is enabled on the <em>API</em> screen.',
@@ -357,9 +358,9 @@ function largo_anaytic_bridge_popular_posts_settings_section_intro() {
  *
  * @since v0.1
  */
-function analyticbridge_setting_api_client_id_input() {
-  echo '<input name="analyticbridge_setting_api_client_id" id="analyticbridge_setting_api_client_id" type="text" value="' .
-    analyticbridge_client_id() .
+function analyticsbridge_setting_api_client_id_input() {
+  echo '<input name="analyticsbridge_setting_api_client_id" id="analyticsbridge_setting_api_client_id" type="text" value="' .
+    analyticsbridge_client_id() .
     '" class="regular-text" />';
 }
 
@@ -368,9 +369,9 @@ function analyticbridge_setting_api_client_id_input() {
  *
  * @since v0.1
  */
-function analyticbridge_setting_api_client_secret_input() {
-  echo '<input name="analyticbridge_setting_api_client_secret" id="analyticbridge_setting_api_client_secret" type="text" value="' .
-    analyticbridge_client_secret() .
+function analyticsbridge_setting_api_client_secret_input() {
+  echo '<input name="analyticsbridge_setting_api_client_secret" id="analyticsbridge_setting_api_client_secret" type="text" value="' .
+    analyticsbridge_client_secret() .
     '" class="regular-text" />';
 }
 
@@ -379,11 +380,11 @@ function analyticbridge_setting_api_client_secret_input() {
  *
  * @since v0.1
  */
-function analyticbridge_setting_api_token_connect_button() {
-  if (analyticbridge_client_id() && analyticbridge_client_secret()) {
+function analyticsbridge_setting_api_token_connect_button() {
+  if (analyticsbridge_client_id() && analyticsbridge_client_secret()) {
     // API Tokens are defined.
 
-    if (!get_option('analyticbridge_access_token')) {
+    if (!bt_analyticsbridge_option_access_token()) {
       // Analytic Bridge is NOT authenticated.
       // We still need it to create an authentication URL.
       $client = analytic_bridge_google_client(false); ?>
@@ -392,9 +393,9 @@ function analyticbridge_setting_api_token_connect_button() {
   'gapp'
 ); ?></a>
 <p class="description"><?php _e(
-      'A user with read access to your organization\'s Google Analytics profile must connect their Google Account.',
-      'gapp'
-    ); ?></p>
+  'A user with read access to your organization\'s Google Analytics profile must connect their Google Account.',
+  'gapp'
+); ?></p>
 <?php
     } else {
 
@@ -415,28 +416,28 @@ function analyticbridge_setting_api_token_connect_button() {
     </span>
 </div>
 <!-- todo: <p class="description">Disconnect this user.</p> -->
-<?php if (get_option('analyticbridge_authenticated_user')) {
+<?php if (bt_analyticsbridge_option_authenticated_user()) {
 
-     $userdata = get_userdata(get_option('analyticbridge_authenticated_user'));
-     $username = $userdata->user_login;
+  $userdata = get_userdata(bt_analyticsbridge_option_authenticated_user());
+  $username = $userdata->user_login;
 
-     $authenticated_date = get_option('analyticbridge_authenticated_date_gmt');
-     $authenticated_date = get_date_from_gmt($authenticated_date);
-     $authenticated_date = mysql2date('M d, Y', $authenticated_date);
-     ?>
+  $authenticated_date = bt_analyticsbridge_option_authenticated_date_gmt();
+  $authenticated_date = get_date_from_gmt($authenticated_date);
+  $authenticated_date = mysql2date('M d, Y', $authenticated_date);
+  ?>
 <p class="description">
     <?php printf(__('by WordPress user "%1$s" on %2$s', 'gapp'), $username, $authenticated_date); ?>
 </p>
 <?php
-   }
+}
     }
   } else {
      ?>
 <span class='google-button disabled'><?php _e('Google Analytics not connected', 'gapp'); ?></span>
 <p class="description"><?php _e(
-     'You must enter a Google Client ID and Client Secret above, and press the "Save Changes" button, before you can connect Google Analytics.',
-     'gapp'
-   ); ?></p>
+  'You must enter a Google Client ID and Client Secret above, and press the "Save Changes" button, before you can connect Google Analytics.',
+  'gapp'
+); ?></p>
 <?php
   }
 }
@@ -446,10 +447,10 @@ function analyticbridge_setting_api_token_connect_button() {
  *
  * @since v0.1
  */
-function analyticbridge_setting_account_profile_id_input() {
+function bt_analyticsbridge_setting_account_profile_id_input() {
   if ($client = analytic_bridge_google_client(true, $e)) {
-    echo '<input name="analyticbridge_setting_account_profile_id" id="analyticbridge_setting_account_profile_id" type="text" value="' .
-      get_option('analyticbridge_setting_account_profile_id') .
+    echo '<input name="bt_analyticsbridge_setting_account_profile_id" id="bt_analyticsbridge_setting_account_profile_id" type="text" value="' .
+      bt_analyticsbridge_option_account_profile_id() .
       '" class="regular-text" />';
   } else {
     echo "<p class='description'>Not authenticated.</p>";
@@ -461,8 +462,8 @@ function analyticbridge_setting_account_profile_id_input() {
  *
  * @since v0.1
  */
-function analyticbridge_setting_popular_posts_halflife_input() {
-  echo '<input name="analyticbridge_setting_popular_posts_halflife" id="analyticbridge_setting_popular_posts_halflife" type="number" value="' .
-    get_option('analyticbridge_setting_popular_posts_halflife') .
+function analyticsbridge_setting_popular_posts_halflife_input() {
+  echo '<input name="analyticsbridge_setting_popular_posts_halflife" id="analyticsbridge_setting_popular_posts_halflife" type="number" value="' .
+    bt_analyticsbridge_option_popular_posts_halflife() .
     '" class="regular-text" />';
 }
