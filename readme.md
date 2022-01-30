@@ -1,6 +1,13 @@
-# Google Analytics Popular Posts
+:bangbang: | This repository has been archived. 
+:---: | :---
 
-**_Warning:_** this plugin is under active development. Updating to new versions might require reactivating to rebuild database tables, as there is currently no upgrading framework.
+If you're interested in working with Google Analytics data in WordPress, some of the core authentication code has been **[migrated here](https://github.com/wjhdev/analytics-bridge)** to work on further.  
+
+The rest of this readme represents the original documentation.
+
+* * *
+
+# Google Analytics Popular Posts
 
 ## Documentation
 
